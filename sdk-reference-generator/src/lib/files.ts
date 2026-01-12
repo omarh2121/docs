@@ -184,7 +184,9 @@ export async function copyToDocs(
     return false;
   }
 
+  await fs.remove(destDir);
   await fs.ensureDir(destDir);
+
   log.info(`Copying ${files.length} files to ${destDir}`, 1);
 
   for (const file of files) {

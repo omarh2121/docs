@@ -42,9 +42,7 @@ describe("flattenMarkdown", () => {
 
       // nested file should be flattened with path prefix
       expect(
-        await fs.pathExists(
-          path.join(tempDir, "modules-sandbox-Sandbox.mdx")
-        )
+        await fs.pathExists(path.join(tempDir, "modules-sandbox-Sandbox.mdx"))
       ).toBe(true);
       // original nested directory should be removed
       expect(await fs.pathExists(nestedDir)).toBe(false);
@@ -105,10 +103,7 @@ describe("flattenMarkdown", () => {
     });
 
     it("generates correct title from snake_case filenames", async () => {
-      await fs.writeFile(
-        path.join(tempDir, "sandbox_sync.md"),
-        "# Content"
-      );
+      await fs.writeFile(path.join(tempDir, "sandbox_sync.md"), "# Content");
 
       await flattenMarkdown(tempDir);
 
@@ -175,17 +170,22 @@ sidebarTitle: "Existing"
 
       const sandboxDir = path.join(modulesDir, "sandbox");
       await fs.ensureDir(sandboxDir);
-      await fs.writeFile(path.join(sandboxDir, "Sandbox.md"), "# Sandbox class");
+      await fs.writeFile(
+        path.join(sandboxDir, "Sandbox.md"),
+        "# Sandbox class"
+      );
 
       await flattenMarkdown(tempDir);
 
       // check results
       expect(await fs.pathExists(path.join(tempDir, "README.md"))).toBe(false);
-      expect(await fs.pathExists(path.join(tempDir, "TopLevel.mdx"))).toBe(true);
-      expect(await fs.pathExists(path.join(tempDir, "modules.mdx"))).toBe(true);
-      expect(await fs.pathExists(path.join(tempDir, "modules-Helper.mdx"))).toBe(
+      expect(await fs.pathExists(path.join(tempDir, "TopLevel.mdx"))).toBe(
         true
       );
+      expect(await fs.pathExists(path.join(tempDir, "modules.mdx"))).toBe(true);
+      expect(
+        await fs.pathExists(path.join(tempDir, "modules-Helper.mdx"))
+      ).toBe(true);
       expect(
         await fs.pathExists(path.join(tempDir, "modules-sandbox-Sandbox.mdx"))
       ).toBe(true);
@@ -362,5 +362,73 @@ describe("copyToDocs", () => {
     expect(await fs.pathExists(path.join(destDir, "readme.txt"))).toBe(false);
     expect(await fs.pathExists(path.join(destDir, "config.json"))).toBe(false);
   });
-});
 
+  it("removes stale files from previous generation", async () => {
+    // simulate previous generation with 3 files
+    await fs.writeFile(
+      path.join(destDir, "Sandbox.mdx"),
+      '---\nsidebarTitle: "Sandbox"\n---\n\n# Old content'
+    );
+    await fs.writeFile(
+      path.join(destDir, "Template.mdx"),
+      '---\nsidebarTitle: "Template"\n---\n\n# Old content'
+    );
+    await fs.writeFile(
+      path.join(destDir, "OldAPI.mdx"),
+      '---\nsidebarTitle: "Old API"\n---\n\n# Removed in new version'
+    );
+
+    // new generation only has 2 files (OldAPI.mdx was removed)
+    await fs.writeFile(
+      path.join(srcDir, "Sandbox.mdx"),
+      '---\nsidebarTitle: "Sandbox"\n---\n\n# New content'
+    );
+    await fs.writeFile(
+      path.join(srcDir, "Template.mdx"),
+      '---\nsidebarTitle: "Template"\n---\n\n# New content'
+    );
+
+    const result = await copyToDocs(srcDir, destDir, "SDK", "v2.0.0");
+
+    expect(result).toBe(true);
+    expect(await fs.pathExists(path.join(destDir, "Sandbox.mdx"))).toBe(true);
+    expect(await fs.pathExists(path.join(destDir, "Template.mdx"))).toBe(true);
+    // stale file should be removed
+    expect(await fs.pathExists(path.join(destDir, "OldAPI.mdx"))).toBe(false);
+
+    // verify content was updated (not just appended)
+    const sandboxContent = await fs.readFile(
+      path.join(destDir, "Sandbox.mdx"),
+      "utf-8"
+    );
+    expect(sandboxContent).toContain("New content");
+    expect(sandboxContent).not.toContain("Old content");
+  });
+
+  it("cleans entire destination directory before copying", async () => {
+    // create various files and subdirectories in destination
+    await fs.writeFile(path.join(destDir, "File1.mdx"), "content");
+    await fs.writeFile(path.join(destDir, "File2.mdx"), "content");
+    await fs.writeFile(path.join(destDir, "random.txt"), "text");
+    const subdir = path.join(destDir, "subdir");
+    await fs.ensureDir(subdir);
+    await fs.writeFile(path.join(subdir, "nested.mdx"), "nested");
+
+    // new generation has different files
+    await fs.writeFile(
+      path.join(srcDir, "NewFile.mdx"),
+      '---\nsidebarTitle: "New"\n---\n\n# Content'
+    );
+
+    const result = await copyToDocs(srcDir, destDir, "SDK", "v1.0.0");
+
+    expect(result).toBe(true);
+    // only new file should exist
+    expect(await fs.pathExists(path.join(destDir, "NewFile.mdx"))).toBe(true);
+    // all old files should be gone
+    expect(await fs.pathExists(path.join(destDir, "File1.mdx"))).toBe(false);
+    expect(await fs.pathExists(path.join(destDir, "File2.mdx"))).toBe(false);
+    expect(await fs.pathExists(path.join(destDir, "random.txt"))).toBe(false);
+    expect(await fs.pathExists(subdir)).toBe(false);
+  });
+});
