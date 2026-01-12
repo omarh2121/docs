@@ -1,5 +1,5 @@
 import { simpleGit, SimpleGit } from "simple-git";
-import { sortVersionsDescending } from "./utils.js";
+import { sortVersionsDescending, normalizeVersion } from "./utils.js";
 import { log } from "./log.js";
 
 const git: SimpleGit = simpleGit();
@@ -87,7 +87,7 @@ export async function resolveLatestVersion(
   version: string
 ): Promise<string | null> {
   if (version !== "latest") {
-    return version;
+    return normalizeVersion(version);
   }
 
   const versions = await fetchRemoteTags(repo, tagPattern);

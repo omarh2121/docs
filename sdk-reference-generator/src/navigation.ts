@@ -74,13 +74,14 @@ export async function buildNavigation(
         versions.map(async (version, index) => {
           const versionDir = path.join(sdkDir, version);
           const modules = await getModules(versionDir);
+          const normalizedVersion = normalizeVersion(version);
 
           return {
-            version: normalizeVersion(version),
+            version: normalizedVersion,
             default: index === 0,
             pages: modules.map(
               (module) =>
-                `${CONSTANTS.DOCS_SDK_REF_PATH}/${sdkKey}/${version}/${module}`
+                `${CONSTANTS.DOCS_SDK_REF_PATH}/${sdkKey}/${normalizedVersion}/${module}`
             ),
           };
         })
