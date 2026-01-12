@@ -43,7 +43,15 @@ export async function installDependencies(
         });
         return { usePoetryRun: true };
       } catch {
-        log.warn("poetry failed, using global pydoc-markdown...", 1);
+        log.warn("poetry failed, falling back to pip...", 1);
+
+        log.info("Installing SDK package from local directory...", 1);
+        await execa("pip", ["install", "--break-system-packages", "."], {
+          cwd: sdkDir,
+          stdio: "inherit",
+        });
+
+        log.info("Installing pydoc-markdown...", 1);
         await execa(
           "pip",
           ["install", "--break-system-packages", "pydoc-markdown"],
@@ -52,6 +60,7 @@ export async function installDependencies(
             stdio: "inherit",
           }
         );
+
         return { usePoetryRun: false };
       }
     }
