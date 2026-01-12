@@ -64,6 +64,7 @@ async function flattenNestedFiles(refDir: string): Promise<void> {
 
   const targetFiles = new Set<string>();
   const collisions: string[] = [];
+  const moves: Array<{ from: string; to: string }> = [];
 
   for (const file of nestedFiles) {
     const filename = path.basename(file);
@@ -84,16 +85,25 @@ async function flattenNestedFiles(refDir: string): Promise<void> {
     }
     targetFiles.add(targetName);
 
-    await fs.move(path.join(refDir, file), path.join(refDir, targetName), {
-      overwrite: false,
+    moves.push({
+      from: path.join(refDir, file),
+      to: path.join(refDir, targetName),
     });
   }
 
   if (collisions.length > 0) {
     log.warn(`Detected ${collisions.length} filename collision(s):`, 1);
     collisions.forEach((c) => log.data(c, 2));
+    throw new Error(
+      `Cannot flatten files: ${collisions.length} filename collision(s) detected. ` +
+        `Different source files would overwrite each other.`
+    );
   }
+
+  for (const { from, to } of moves) {
+    await fs.move(from, to, { overwrite: false });
   }
+}
 
 async function removeEmptyDirectories(refDir: string): Promise<void> {
   const dirs = await glob("**/", { cwd: refDir });
@@ -106,7 +116,7 @@ async function removeEmptyDirectories(refDir: string): Promise<void> {
       }
     } catch {}
   }
-  }
+}
 
 async function convertMdToMdx(refDir: string): Promise<void> {
   const mdFiles = await glob("*.md", { cwd: refDir });
@@ -123,7 +133,7 @@ async function convertMdToMdx(refDir: string): Promise<void> {
     await fs.writeFile(mdxPath, createFrontmatter(title) + content);
     await fs.remove(fullPath);
   }
-  }
+}
 
 async function ensureFrontmatter(refDir: string): Promise<void> {
   const mdxFiles = await glob(`*${CONSTANTS.MDX_EXTENSION}`, { cwd: refDir });
