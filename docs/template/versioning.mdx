@@ -1,0 +1,256 @@
+---
+title: "Template Versioning"
+sidebarTitle: "Versioning"
+description: "Version your templates using tags for environment-based deployments"
+---
+
+Template versioning allows you to maintain multiple versions of the same template using tags. This enables workflows like semantic versioning, environment-based deployments, and gradual rollouts.
+
+## Tag Format
+
+Tags follow the `alias:tag` format, where `alias` is your template's unique identifier and `tag` is the version label.
+
+```
+my-template:v1.0.0
+my-template:production
+my-template:latest
+```
+
+## The Default Tag
+
+When you build or reference a template without specifying a tag, E2B uses the `default` tag automatically. This means:
+
+- `my-template` is equivalent to `my-template:default`
+- Existing templates without tags continue to work seamlessly
+
+<CodeGroup>
+
+```typescript JavaScript & TypeScript
+// These are equivalent
+const sandbox1 = await Sandbox.create('my-template')
+const sandbox2 = await Sandbox.create('my-template:default')
+```
+
+```python Python
+# These are equivalent
+sandbox1 = Sandbox('my-template')
+sandbox2 = Sandbox('my-template:default')
+```
+
+</CodeGroup>
+
+## Building with Tags
+
+You can build templates with one or more tags to create versioned builds.
+
+### Single Tag
+
+<CodeGroup>
+
+```typescript JavaScript & TypeScript
+import { Template } from 'e2b'
+
+// Build with a specific version tag
+await Template.build(template, 'my-template:v1.0.0')
+```
+
+```python Python
+from e2b import Template
+
+# Build with a specific version tag
+Template.build(template, 'my-template:v1.0.0')
+```
+
+</CodeGroup>
+
+### Multiple Tags
+
+Build with multiple tags to assign several version labels to the same build artifact.
+
+<CodeGroup>
+
+```typescript JavaScript & TypeScript
+import { Template } from 'e2b'
+
+// Build with multiple tags pointing to the same artifact
+await Template.build(template, ['my-template:v1.2.0', 'my-template:latest'])
+```
+
+```python Python
+from e2b import Template
+
+# Build with multiple tags pointing to the same artifact
+Template.build(template, ['my-template:v1.2.0', 'my-template:latest'])
+```
+
+</CodeGroup>
+
+<Tip>
+When building with multiple tags, E2B creates a single build artifact that all tags reference. This saves build time and storage.
+</Tip>
+
+## Managing Tags
+
+You can manage tags on existing template builds without rebuilding.
+
+### Assign Tags
+
+Use `assignTag` to add new tag(s) to an existing build. This is useful for promoting a tested version to production or marking a version as stable.
+
+<CodeGroup>
+
+```typescript JavaScript & TypeScript
+import { Template } from 'e2b'
+
+// Assign a single tag
+await Template.assignTag('my-template:v1.2.0', 'my-template:production')
+
+// Assign multiple tags at once
+await Template.assignTag('my-template:v1.2.0', [
+  'my-template:production',
+  'my-template:stable'
+])
+```
+
+```python Python
+from e2b import Template
+
+# Assign a single tag
+Template.assign_tag('my-template:v1.2.0', 'my-template:production')
+
+# Assign multiple tags at once
+Template.assign_tag('my-template:v1.2.0', [
+  'my-template:production',
+  'my-template:stable'
+])
+```
+
+</CodeGroup>
+
+### Delete Tags
+
+Use `deleteTag` to remove a tag from a template. The underlying build artifact remains accessible via other tags.
+
+<CodeGroup>
+
+```typescript JavaScript & TypeScript
+import { Template } from 'e2b'
+
+// Remove a tag
+await Template.deleteTag('my-template:staging')
+```
+
+```python Python
+from e2b import Template
+
+# Remove a tag
+Template.delete_tag('my-template:staging')
+```
+
+</CodeGroup>
+
+<Warning>
+Deleting a tag does not delete the build artifact. Other tags pointing to the same build will continue to work.
+</Warning>
+
+## Use Cases
+
+### Semantic Versioning
+
+Use semantic version tags to track releases and enable rollbacks.
+
+<CodeGroup>
+
+```typescript JavaScript & TypeScript
+// Release versions
+await Template.build(template, 'api-server:v1.0.0')
+await Template.build(template, 'api-server:v1.1.0')
+await Template.build(template, 'api-server:v2.0.0')
+
+// Create sandbox from specific version
+const sandbox = await Sandbox.create('api-server:v1.1.0')
+```
+
+```python Python
+# Release versions
+Template.build(template, 'api-server:v1.0.0')
+Template.build(template, 'api-server:v1.1.0')
+Template.build(template, 'api-server:v2.0.0')
+
+# Create sandbox from specific version
+sandbox = Sandbox('api-server:v1.1.0')
+```
+
+</CodeGroup>
+
+### Environment Tags
+
+Use environment tags for deployment pipelines.
+
+<CodeGroup>
+
+```typescript JavaScript & TypeScript
+// Build new version
+await Template.build(template, 'my-app:v1.5.0')
+
+// Promote through environments
+await Template.assignTag('my-app:v1.5.0', 'my-app:staging')
+
+// After testing, promote to production
+await Template.assignTag('my-app:v1.5.0', 'my-app:production')
+
+// Use in your application
+const env = process.env.NODE_ENV
+const sandbox = await Sandbox.create(`my-app:${env}`)
+```
+
+```python Python
+import os
+
+# Build new version
+Template.build(template, 'my-app:v1.5.0')
+
+# Promote through environments
+Template.assign_tag('my-app:v1.5.0', 'my-app:staging')
+
+# After testing, promote to production
+Template.assign_tag('my-app:v1.5.0', 'my-app:production')
+
+# Use in your application
+env = os.environ.get('ENV', 'staging')
+sandbox = Sandbox(f'my-app:{env}')
+```
+
+</CodeGroup>
+
+### Latest and Stable Tags
+
+Maintain rolling tags that always point to specific versions.
+
+<CodeGroup>
+
+```typescript JavaScript & TypeScript
+// Build with version and latest tag
+await Template.build(template, ['my-tool:v3.0.0', 'my-tool:latest'])
+
+// Mark a tested version as stable
+await Template.assignTag('my-tool:v2.9.0', 'my-tool:stable')
+
+// Users can choose their risk tolerance
+const latestSandbox = await Sandbox.create('my-tool:latest')  // Newest
+const stableSandbox = await Sandbox.create('my-tool:stable')  // Tested
+```
+
+```python Python
+# Build with version and latest tag
+Template.build(template, ['my-tool:v3.0.0', 'my-tool:latest'])
+
+# Mark a tested version as stable
+Template.assign_tag('my-tool:v2.9.0', 'my-tool:stable')
+
+# Users can choose their risk tolerance
+latest_sandbox = Sandbox('my-tool:latest')  # Newest
+stable_sandbox = Sandbox('my-tool:stable')  # Tested
+```
+
+</CodeGroup>
