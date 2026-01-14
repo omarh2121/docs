@@ -164,8 +164,7 @@ sleep 2
 import { Template, defaultBuildLogger } from 'e2b'
 import { template as desktopTemplate } from './template'
 
-await Template.build(desktopTemplate, {
-  alias: 'desktop',
+await Template.build(desktopTemplate, 'desktop', {
   cpuCount: 8,
   memoryMB: 8192,
   onBuildLogs: defaultBuildLogger(),
@@ -177,8 +176,7 @@ await Template.build(desktopTemplate, {
 from e2b import Template, default_build_logger
 from .template import template as desktopTemplate
 
-Template.build(desktopTemplate,
-    alias="desktop",
+Template.build(desktopTemplate, 'desktop',
     cpu_count=8,
     memory_mb=8192,
     on_build_logs=default_build_logger(),

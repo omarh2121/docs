@@ -28,8 +28,7 @@ export const template = Template()
   .fromTemplate("mcp-gateway")
   .addMcpServer(["browserbase", "exa"]);
 
-await Template.build(template, {
-  alias: "my-mcp-gateway",
+await Template.build(template, 'my-mcp-gateway', {
   cpuCount: 8,
   memoryMB: 8192,
   onBuildLogs: defaultBuildLogger(),
@@ -50,7 +49,7 @@ template = (
 
 Template.build(
     template,
-    alias="my-mcp-gateway",
+    'my-mcp-gateway',
     cpu_count=8,
     memory_mb=8192,
     on_build_logs=default_build_logger(),

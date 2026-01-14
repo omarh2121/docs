@@ -41,8 +41,7 @@ template = (
 import { Template, defaultBuildLogger } from 'e2b'
 import { template as claudeCodeTemplate } from './template'
 
-Template.build(claudeCodeTemplate, {
-  alias: 'claude-code',
+Template.build(claudeCodeTemplate, 'claude-code', {
   cpuCount: 1,
   memoryMB: 1024,
   onBuildLogs: defaultBuildLogger(),
@@ -54,8 +53,7 @@ Template.build(claudeCodeTemplate, {
 from e2b import Template, default_build_logger
 from .template import template as claudeCodeTemplate
 
-Template.build(claudeCodeTemplate,
-    alias="claude-code",
+Template.build(claudeCodeTemplate, 'claude-code',
     cpu_count=1,
     memory_mb=1024,
     on_build_logs=default_build_logger(),

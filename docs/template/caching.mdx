@@ -43,9 +43,8 @@ To force rebuild the whole template, you can use also `skipCache`/`skip_cache` p
 
 <CodeGroup>
 
-```typescript JavaScript & TypeScript wrap highlight={3}
-Template.build(template, {
-  alias: 'my-template',
+```typescript JavaScript & TypeScript wrap highlight={2}
+Template.build(template, 'my-template', {
   skipCache: true, // Configure cache skip (except for files)
 })
 ```
@@ -53,7 +52,7 @@ Template.build(template, {
 ```python Python wrap highlight={4}
 Template.build(
     template,
-    alias="my-template",
+    'my-template',
     skip_cache=True,  # Configure cache skip (except for files)
 )
 ```

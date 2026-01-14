@@ -55,8 +55,7 @@ template = (
 import { Template, defaultBuildLogger } from 'e2b'
 import { template as nextJSTemplate } from './template'
 
-Template.build(nextJSTemplate, {
-  alias: 'nextjs-app',
+Template.build(nextJSTemplate, 'nextjs-app', {
   cpuCount: 4,
   memoryMB: 4096,
   onBuildLogs: defaultBuildLogger(),
@@ -68,8 +67,7 @@ Template.build(nextJSTemplate, {
 from e2b import Template, default_build_logger
 from .template import template as nextjsTemplate
 
-Template.build(nextjsTemplate,
-    alias="nextjs-app",
+Template.build(nextjsTemplate, 'nextjs-app',
     cpu_count=4,
     memory_mb=4096,
     on_build_logs=default_build_logger(),

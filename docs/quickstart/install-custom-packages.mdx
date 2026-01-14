@@ -71,8 +71,7 @@ import { Template, defaultBuildLogger } from 'e2b';
 import { template } from './template';
 
 async function main() {
-  await Template.build(template, {
-    alias: "custom-packages",
+  await Template.build(template, 'custom-packages', {
     cpuCount: 2,
     memoryMB: 2048,
     onBuildLogs: defaultBuildLogger(),
@@ -93,7 +92,7 @@ load_dotenv()
 if __name__ == '__main__':
     Template.build(
         template,
-        alias="custom-packages",
+        'custom-packages',
         cpu_count=2,
         memory_mb=2048,
         on_build_logs=default_build_logger(),

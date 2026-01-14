@@ -45,8 +45,7 @@ const template = Template()
 
 
 // build_dev.ts
-await Template.build(template, {
-  alias: "custom-user-template", 
+await Template.build(template, 'custom-user-template', {
   onBuildLogs: defaultBuildLogger()
 })
 
@@ -71,8 +70,7 @@ template = (
 
 
 # build_dev.py
-Template.build(template, 
-    alias="custom-user-template", 
+Template.build(template, 'custom-user-template',
     on_build_logs=default_build_logger()
 )
 
