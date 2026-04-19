@@ -1,5 +1,6 @@
 import logging
 import os
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 import uvicorn
@@ -18,13 +19,7 @@ from . import alerts, history
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-app = FastAPI(title="Zyflex AI Command Center", version="2.0.0")
-
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
-
-if DASHBOARD_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(DASHBOARD_DIR)), name="static")
-
+# ── Agents ────────────────────────────────────────────────────────
 _data_agent = DataAgent()
 _analysis_agent = AnalysisAgent()
 _ops_agent = OpsAgent()
@@ -50,7 +45,7 @@ def _build() -> dict:
             "active_alerts": len(alert_list),
             "new_leads": sales["new_leads"],
             "time_label": analysis["time_label"],
-            "weekday": signals["weekday_name"],
+            "weekday_name": signals["weekday_name"],
         },
         "agents": {
             "data": {
@@ -100,9 +95,33 @@ def _html(filename: str) -> HTMLResponse:
         raise HTTPException(status_code=404, detail=f"{filename} ikke fundet")
 
 
+# ── App lifecycle ─────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    log.info("Zyflex AI Command Center starting up")
+    log.info("Dashboard dir: %s | Data dir: %s | Cache TTL: %ss", DASHBOARD_DIR, DASHBOARD_DIR.parent / "data", CACHE_TTL)
+    try:
+        _build()
+        log.info("Cache pre-warmed successfully")
+    except Exception as exc:
+        log.warning("Cache pre-warm failed (non-fatal): %s", exc)
+    yield
+    log.info("Zyflex AI shutting down")
+
+
+# ── FastAPI app ───────────────────────────────────────────────────
+app = FastAPI(title="Zyflex AI Command Center", version="2.0.0", lifespan=lifespan)
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
+
+if DASHBOARD_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(DASHBOARD_DIR)), name="static")
+
+
+# ── Routes ────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
-    return {"status": "ok", "ts": datetime.now(timezone.utc).isoformat()}
+    return {"status": "ok", "ts": datetime.now(timezone.utc).isoformat(), "version": "2.0.0"}
 
 
 @app.get("/api/dashboard")
@@ -116,8 +135,14 @@ def get_dashboard():
 
 @app.get("/api/recommendation")
 def get_recommendation():
+    """Returns driver instruction + weather + active events (single call for driver view)."""
     try:
-        return _cached()["recommendation"]
+        data = _cached()
+        return {
+            **data["recommendation"],
+            "weather": data["weather"],
+            "active_events": data["active_events"],
+        }
     except Exception as exc:
         log.error("recommendation error: %s", exc)
         raise HTTPException(status_code=500, detail="Fejl ved anbefaling")

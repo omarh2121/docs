@@ -51,7 +51,7 @@ function renderKPIs(ov) {
   setText('kpi-earning-val', ov.earning_potential);
   setText('kpi-alerts-val', ov.active_alerts);
   setText('kpi-leads-val', ov.new_leads);
-  setText('kpi-context', `${ov.weekday_name || ov.weekday} · ${ov.time_label}`);
+  setText('kpi-context', `${ov.weekday_name} · ${ov.time_label}`);
 }
 
 // ── Zone chart + table ────────────────────────────────────────────
