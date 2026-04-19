@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zyflex AI – Command Center</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-left">
+    <span class="logo">⚡ Zyflex AI</span>
+    <span class="header-subtitle">Command Center</span>
+  </div>
+  <div class="header-right">
+    <span id="liveClock" style="font-size:13px;color:#5f6368;font-weight:500">--:--:--</span>
+    <span class="last-updated" id="lastUpdated">Henter data...</span>
+    <button class="btn btn-secondary btn-sm" onclick="refresh()">↻ Opdater</button>
+    <a href="/driver" class="btn btn-primary btn-sm">🚖 Chauffør-visning</a>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- KPI Strip -->
+  <section class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-icon blue">📈</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-demand-val">–</div>
+        <div class="kpi-label">Samlet efterspørgsel</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green">📍</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-zone-val">–</div>
+        <div class="kpi-label">Bedste zone nu</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon yellow">💰</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-earning-val">–</div>
+        <div class="kpi-label">Indtjeningspotentiale</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon red">🔔</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-alerts-val">0</div>
+        <div class="kpi-label">Aktive advarsler</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple">🏢</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-leads-val">0</div>
+        <div class="kpi-label">B2B leads (høj)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Context label -->
+  <div style="font-size:12px;color:#5f6368;margin-bottom:16px;padding-left:2px" id="kpi-context"></div>
+
+  <!-- Active alerts (hidden when empty) -->
+  <section class="card alerts-card" id="alertsSection" style="display:none">
+    <div class="card-header">
+      <h2>🚨 Aktive Advarsler</h2>
+    </div>
+    <div id="alertsList"></div>
+  </section>
+
+  <!-- Zone intelligence + Right column -->
+  <div class="grid-two">
+
+    <!-- Left: chart + zone table -->
+    <div class="card zone-card">
+      <div class="card-header">
+        <h2>Zone Intelligens</h2>
+        <span class="chip" id="time-label">–</span>
+      </div>
+      <div style="position:relative;height:200px">
+        <canvas id="zoneChart"></canvas>
+      </div>
+      <div class="zone-table" id="zoneTable">
+        <div class="loading"><div class="spinner"></div>Henter zonedata...</div>
+      </div>
+    </div>
+
+    <!-- Right: weather + agents -->
+    <div class="right-column">
+      <div class="card">
+        <div class="card-header"><h2>🌤 Vejr – København</h2></div>
+        <div class="weather-box" id="weatherBox">
+          <div class="loading" style="padding:16px 0">Henter vejr...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>🤖 Agent Status</h2></div>
+        <div id="agentList">
+          <div class="loading" style="padding:12px 0">Henter agenter...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Events + Leads -->
+  <div class="section-row">
+    <div class="card">
+      <div class="card-header"><h2>📅 Kommende Events</h2></div>
+      <div id="eventsList"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>🏢 B2B Salgsmuligheder</h2></div>
+      <div id="leadsList"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card">
+    <div class="card-header"><h2>📊 Historik & Mønstre</h2></div>
+    <div id="historySection"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
