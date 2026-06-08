@@ -135,13 +135,18 @@ def get_dashboard():
 
 @app.get("/api/recommendation")
 def get_recommendation():
-    """Returns driver instruction + weather + active events (single call for driver view)."""
+    """Single call for driver earnings view — includes zones, fares, events, alerts."""
     try:
         data = _cached()
         return {
             **data["recommendation"],
-            "weather": data["weather"],
-            "active_events": data["active_events"],
+            "weather":          data["weather"],
+            "active_events":    data["active_events"],
+            "top_zones":        data["zones"][:3],
+            "zone_fares":       data["history"]["zone_avg_fares"],
+            "upcoming_events":  data["events"][:4],
+            "alerts":           data["alerts"],
+            "demand_label":     data["overview"]["demand_label"],
         }
     except Exception as exc:
         log.error("recommendation error: %s", exc)
