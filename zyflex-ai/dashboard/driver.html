@@ -243,6 +243,43 @@
     .admin-link { text-align: center; padding: 8px; background: #0d0d0d; }
     .admin-link a { font-size: 11px; color: #222; text-decoration: none; }
 
+    /* ── Demand signal bar (Phase 1) ─────────────────── */
+    .demand-bar {
+      background: #0f1f0f;
+      border-top: 1px solid #1a2e1a;
+      padding: 12px 20px;
+      display: none;
+      flex-shrink: 0;
+    }
+    .demand-bar.show { display: block; }
+    .demand-bar-title { font-size: 10px; letter-spacing: 3px; color: #2a4a2a; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+    .demand-row { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .demand-item { display: flex; flex-direction: column; gap: 2px; }
+    .demand-item-label { font-size: 10px; color: #3a5a3a; }
+    .demand-item-val { font-size: 15px; font-weight: 800; }
+    .demand-item-val.high   { color: #34a853; }
+    .demand-item-val.medium { color: #f9ab00; }
+    .demand-item-val.low    { color: #ea4335; }
+    .go-now-btn {
+      background: #1e8e3e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      margin-left: auto;
+      cursor: pointer;
+      display: none;
+      animation: pulse-green 1.5s infinite;
+    }
+    .go-now-btn.show { display: block; }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(52,168,83,.5); }
+      50%       { box-shadow: 0 0 0 8px rgba(52,168,83,0); }
+    }
+
     /* ── Loading / error ─────────────────────────────── */
     .loading-zone { width: 34px; height: 34px; border: 3px solid #1a1a1a; border-top-color: #1a73e8; border-radius: 50%; animation: spin .7s linear infinite; margin: 4px auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -300,6 +337,26 @@
 <div class="weather-strip" id="weatherStrip" style="display:none">
   <span id="weatherEmoji"></span>
   <span id="weatherText"></span>
+</div>
+
+<!-- Demand signal bar (Phase 1) -->
+<div class="demand-bar" id="demandBar">
+  <div class="demand-bar-title">📡 Live Efterspørgsel</div>
+  <div class="demand-row">
+    <div class="demand-item">
+      <div class="demand-item-label">Nu</div>
+      <div class="demand-item-val" id="drDemandNow">–</div>
+    </div>
+    <div class="demand-item">
+      <div class="demand-item-label">Om 20 min</div>
+      <div class="demand-item-val" id="drDemand20">–</div>
+    </div>
+    <div class="demand-item">
+      <div class="demand-item-label">Confidence</div>
+      <div class="demand-item-val" style="color:#5f8a5f" id="drConf">–</div>
+    </div>
+    <button class="go-now-btn" id="drGoNow">KØR NU</button>
+  </div>
 </div>
 
 <!-- Bottom bar -->
@@ -454,9 +511,37 @@
       'Opdateret ' + new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
   }
 
+  // ── Demand Research (Phase 1) ─────────────────────────────────
+  const _DEMAND_LABELS = { high: 'HØJ', medium: 'MEDIUM', low: 'LAV' };
+
+  async function fetchDemand() {
+    try {
+      const city = encodeURIComponent(window._demandCity || 'København');
+      const res = await fetch('/ai/demand-research?city=' + city);
+      if (!res.ok) return;
+      const d = await res.json();
+      const nowClass   = d.demand_now   || 'medium';
+      const min20Class = d.demand_20_min || 'medium';
+      document.getElementById('drDemandNow').textContent = _DEMAND_LABELS[nowClass]   || nowClass;
+      document.getElementById('drDemandNow').className   = 'demand-item-val ' + nowClass;
+      document.getElementById('drDemand20').textContent  = _DEMAND_LABELS[min20Class] || min20Class;
+      document.getElementById('drDemand20').className    = 'demand-item-val ' + min20Class;
+      document.getElementById('drConf').textContent      = (d.confidence || 0) + '%';
+      document.getElementById('demandBar').classList.add('show');
+      const goBtn = document.getElementById('drGoNow');
+      if (d.confidence >= 80 && d.demand_now === 'high') {
+        goBtn.classList.add('show');
+      } else {
+        goBtn.classList.remove('show');
+      }
+    } catch (_) {}
+  }
+
   // Load + auto-refresh every 3 minutes
   fetchRec();
+  fetchDemand();
   setInterval(fetchRec, 3 * 60 * 1000);
+  setInterval(fetchDemand, 3 * 60 * 1000);
 </script>
 </body>
 </html>

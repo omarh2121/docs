@@ -76,6 +76,30 @@
     <div id="alertsList"></div>
   </section>
 
+  <!-- Live Demand Signals (Phase 1) -->
+  <section class="card" id="demandSection" style="margin-bottom:20px">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+      <h2>📡 Live Efterspørgselssignaler</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label for="demandCity" style="font-size:12px;color:#5f6368">By:</label>
+        <select id="demandCity" onchange="loadDemand()" style="font-size:13px;padding:4px 8px;border:1px solid #dadce0;border-radius:6px;background:#fff;color:#202124;cursor:pointer">
+          <option value="København">København</option>
+          <option value="Horsens">Horsens</option>
+          <option value="Aarhus">Aarhus</option>
+          <option value="Odense">Odense</option>
+          <option value="Aalborg">Aalborg</option>
+          <option value="Vejle">Vejle</option>
+          <option value="Randers">Randers</option>
+          <option value="Silkeborg">Silkeborg</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="loadDemand()">↻</button>
+      </div>
+    </div>
+    <div id="demandBody">
+      <div class="loading"><div class="spinner"></div>Henter efterspørgselsdata...</div>
+    </div>
+  </section>
+
   <!-- Zone intelligence + Right column -->
   <div class="grid-two">
 
@@ -131,5 +155,59 @@
 </main>
 
 <script src="/static/app.js"></script>
+<script>
+// ── Live Demand Signals (Phase 1) ─────────────────────────────────
+function demandLabel(label) {
+  const map = { high: 'HØJ', medium: 'MEDIUM', low: 'LAV' };
+  const color = { high: '#1e8e3e', medium: '#f9ab00', low: '#ea4335' };
+  const bg    = { high: '#e6f4ea', medium: '#fef9e7', low: '#fce8e6' };
+  const text = map[label] || label;
+  const c = color[label] || '#5f6368';
+  const b = bg[label]    || '#f1f3f4';
+  return `<span style="background:${b};color:${c};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">${text}</span>`;
+}
+
+async function loadDemand() {
+  const city = document.getElementById('demandCity').value;
+  const body = document.getElementById('demandBody');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Analyserer ' + city + '...</div>';
+  try {
+    const res = await fetch('/ai/demand-research?city=' + encodeURIComponent(city));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    const goNow = d.confidence >= 80 && d.demand_now === 'high';
+    const w = d.signals && d.signals.weather;
+    const tempStr = w && w.temperature != null ? w.temperature + '°C · ' + (w.description || '') : (w ? w.description || '' : '');
+    body.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:24px;padding:12px 0 4px">
+        <div style="min-width:140px">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:4px">Efterspørgsel nu</div>
+          <div style="font-size:20px;font-weight:700">${demandLabel(d.demand_now)}</div>
+        </div>
+        <div style="min-width:140px">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:4px">Om 20 min</div>
+          <div style="font-size:20px;font-weight:700">${demandLabel(d.demand_20_min)}</div>
+        </div>
+        <div style="min-width:120px">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:4px">Score</div>
+          <div style="font-size:20px;font-weight:700;color:#1a73e8">${d.score}</div>
+        </div>
+        <div style="min-width:120px">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:4px">Confidence</div>
+          <div style="font-size:20px;font-weight:700;color:#5f6368">${d.confidence}%</div>
+        </div>
+        ${goNow ? '<div style="display:flex;align-items:center"><span style="background:#1e8e3e;color:#fff;padding:8px 20px;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.5px">KØR NU</span></div>' : ''}
+      </div>
+      <div style="font-size:13px;color:#3c4043;margin:10px 0 6px;line-height:1.6">${d.reason_da || ''}</div>
+      ${tempStr ? '<div style="font-size:12px;color:#5f6368">Vejr: ' + tempStr + '</div>' : ''}
+      <div style="font-size:11px;color:#9aa0a6;margin-top:8px">Zone: ${d.zone} · ${new Date(d.timestamp).toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})}</div>
+    `;
+  } catch (err) {
+    body.innerHTML = '<div style="padding:12px;color:#ea4335;font-size:13px">Efterspørgselsdata utilgængelig – prøv igen</div>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => { loadDemand(); });
+</script>
 </body>
 </html>

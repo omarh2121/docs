@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,6 +14,9 @@ from .agents.data_agent import DataAgent
 from .agents.analysis_agent import AnalysisAgent
 from .agents.ops_agent import OpsAgent
 from .agents.sales_agent import SalesAgent
+from .agents.demand_research_agent import DemandResearchAgent
+from .agents.verification_agent import VerificationAgent
+from .agents.business_signal_agent import BusinessSignalAgent
 from . import alerts, history
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -24,6 +27,9 @@ _data_agent = DataAgent()
 _analysis_agent = AnalysisAgent()
 _ops_agent = OpsAgent()
 _sales_agent = SalesAgent()
+_demand_agent = DemandResearchAgent()
+_verification_agent = VerificationAgent()
+_business_agent = BusinessSignalAgent()
 
 _cache: dict = {"data": None, "ts": None}
 
@@ -159,6 +165,39 @@ def get_alerts():
         return {"alerts": _cached()["alerts"]}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ── Phase 1: Demand Research AI endpoints ────────────────────────
+
+@app.get("/ai/demand-research")
+def ai_demand_research(city: str = Query(default="København", description="Dansk bynavn")):
+    """Finder efterspørgselssignaler nu og de næste 20-60 min."""
+    try:
+        return _demand_agent.run(city=city)
+    except Exception as exc:
+        log.error("demand-research error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Fejl ved efterspørgselsanalyse")
+
+
+@app.get("/ai/verified-demand")
+def ai_verified_demand(city: str = Query(default="København", description="Dansk bynavn")):
+    """Efterspørgselsanalyse med verificering af dato, by, kilde og relevans."""
+    try:
+        raw = _demand_agent.run(city=city)
+        return _verification_agent.run(raw)
+    except Exception as exc:
+        log.error("verified-demand error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Fejl ved verificeret efterspørgsel")
+
+
+@app.get("/ai/business-signals")
+def ai_business_signals(city: str = Query(default="København", description="Dansk bynavn")):
+    """Finder B2B-signaler: hoteller, hospitaler, virksomheder, venues, skoler, klinikker."""
+    try:
+        return _business_agent.run(city=city)
+    except Exception as exc:
+        log.error("business-signals error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Fejl ved virksomhedssignaler")
 
 
 @app.get("/", response_class=HTMLResponse)

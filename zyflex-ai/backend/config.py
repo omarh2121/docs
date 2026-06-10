@@ -10,6 +10,7 @@ WEATHER_LAT = float(os.getenv("WEATHER_LAT", "55.6761"))
 WEATHER_LON = float(os.getenv("WEATHER_LON", "12.5683"))
 WEATHER_TZ = os.getenv("WEATHER_TZ", "Europe/Copenhagen")
 CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))  # seconds
+GOOGLE_PLACES_KEY = os.getenv("GOOGLE_PLACES_KEY", "")
 
 ZONES = [
     "Centrum", "Nørreport", "Rådhuspladsen", "Lufthavn",
