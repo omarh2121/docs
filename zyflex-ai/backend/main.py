@@ -17,6 +17,7 @@ from .agents.sales_agent import SalesAgent
 from .agents.demand_research_agent import DemandResearchAgent
 from .agents.verification_agent import VerificationAgent
 from .agents.business_signal_agent import BusinessSignalAgent
+from .agents.contract_hunter_agent import ContractHunterAgent
 from . import alerts, history
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -30,6 +31,7 @@ _sales_agent = SalesAgent()
 _demand_agent = DemandResearchAgent()
 _verification_agent = VerificationAgent()
 _business_agent = BusinessSignalAgent()
+_contract_agent = ContractHunterAgent()
 
 _cache: dict = {"data": None, "ts": None}
 
@@ -198,6 +200,16 @@ def ai_business_signals(city: str = Query(default="København", description="Dan
     except Exception as exc:
         log.error("business-signals error: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail="Fejl ved virksomhedssignaler")
+
+
+@app.get("/ai/contracts")
+def ai_contracts(city: str = Query(default="København", description="Dansk bynavn")):
+    """Kontraktmuligheder – top 10 virksomheder med fuld kontaktinfo og potential score."""
+    try:
+        return _contract_agent.run(city=city)
+    except Exception as exc:
+        log.error("contracts error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Fejl ved kontraktanalyse")
 
 
 @app.get("/", response_class=HTMLResponse)
