@@ -317,6 +317,14 @@
     <div class="conf-bg"><div class="conf-fill" id="confFill" style="width:0"></div></div>
   </div>
 
+  <div id="feedbackWrap" style="display:none;margin-top:18px;text-align:center">
+    <div style="font-size:11px;color:#333;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Var anbefalingen god?</div>
+    <div style="display:flex;justify-content:center;gap:12px">
+      <button onclick="sendFeedback('positive')" style="background:#1a2e1a;border:1px solid #2a4a2a;color:#34a853;border-radius:10px;padding:10px 20px;font-size:20px;cursor:pointer">👍</button>
+      <button onclick="sendFeedback('negative')" style="background:#2e1a1a;border:1px solid #4a2a2a;color:#ea4335;border-radius:10px;padding:10px 20px;font-size:20px;cursor:pointer">👎</button>
+    </div>
+  </div>
+
   <div class="divider"></div>
   <div class="backup" id="dBackup"></div>
 </div>
@@ -509,6 +517,41 @@
 
     document.getElementById('dUpdated').textContent =
       'Opdateret ' + new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+
+    // Show feedback buttons after recommendation loads
+    _lastRec = d;
+    const fw = document.getElementById('feedbackWrap');
+    if (fw) {
+      fw.style.display = '';
+      fw.innerHTML = '<div style="font-size:11px;color:#333;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Var anbefalingen god?</div>'
+        + '<div style="display:flex;justify-content:center;gap:12px">'
+        + '<button onclick="sendFeedback(\'positive\')" style="background:#1a2e1a;border:1px solid #2a4a2a;color:#34a853;border-radius:10px;padding:10px 20px;font-size:20px;cursor:pointer">👍</button>'
+        + '<button onclick="sendFeedback(\'negative\')" style="background:#2e1a1a;border:1px solid #4a2a2a;color:#ea4335;border-radius:10px;padding:10px 20px;font-size:20px;cursor:pointer">👎</button>'
+        + '</div>';
+    }
+  }
+
+  // ── Feedback (Phase 3) ───────────────────────────────────────
+  let _lastRec = null;
+
+  async function sendFeedback(vote) {
+    if (!_lastRec) return;
+    const wrap = document.getElementById('feedbackWrap');
+    wrap.innerHTML = '<div style="font-size:13px;color:#34a853;padding:4px 0">Tak for din feedback</div>';
+    try {
+      await fetch('/ai/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: window._demandCity || 'København',
+          entity_name: _lastRec.zone || 'Ukendt',
+          entity_type: 'zone',
+          recommendation_type: 'demand',
+          score: _lastRec.score || 0,
+          feedback: vote,
+        }),
+      });
+    } catch (_) {}
   }
 
   // ── Demand Research (Phase 1) ─────────────────────────────────

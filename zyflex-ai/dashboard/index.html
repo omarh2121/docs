@@ -160,6 +160,17 @@
     </div>
   </section>
 
+  <!-- Systemlæring & Feedback (Phase 3) -->
+  <section class="card" id="learningSection" style="margin-bottom:20px">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+      <h2>🧠 Systemlæring & Feedback</h2>
+      <button class="btn btn-secondary btn-sm" onclick="loadLearning()">↻ Opdater</button>
+    </div>
+    <div id="learningBody">
+      <div class="loading"><div class="spinner"></div>Henter læringsdata...</div>
+    </div>
+  </section>
+
   <!-- History -->
   <div class="card">
     <div class="card-header"><h2>📊 Historik & Mønstre</h2></div>
@@ -221,7 +232,93 @@ async function loadDemand() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => { loadDemand(); loadContracts(); });
+document.addEventListener('DOMContentLoaded', () => { loadDemand(); loadContracts(); loadLearning(); });
+
+// ── Systemlæring & Feedback (Phase 3) ─────────────────────────────
+async function loadLearning() {
+  const body = document.getElementById('learningBody');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Henter læringsdata...</div>';
+  try {
+    const res = await fetch('/ai/learning/report');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+
+    if (!d.has_data) {
+      body.innerHTML = '<div style="padding:16px;color:#5f6368;font-size:13px;text-align:center">'
+        + '🧠 Ingen feedback endnu – brug 👍/👎 i chaufførvisningen for at træne systemet'
+        + '</div>';
+      return;
+    }
+
+    const accPct = d.accuracy_overall != null ? Math.round(d.accuracy_overall * 100) + '%' : '–';
+    const accColor = d.accuracy_overall >= 0.75 ? '#1e8e3e' : d.accuracy_overall >= 0.55 ? '#f9ab00' : '#ea4335';
+
+    // KPI strip
+    let html = '<div style="display:flex;flex-wrap:wrap;gap:20px;padding:12px 0 16px;border-bottom:1px solid #f0f0f0">'
+      + _lKpi('📊', d.total_feedback, 'Total feedback')
+      + _lKpi('👍', d.positive_count, 'Positiv')
+      + _lKpi('👎', d.negative_count, 'Negativ')
+      + _lKpiColored('🎯', accPct, 'Samlet accuracy', accColor)
+      + '</div>';
+
+    // By category table
+    const cats = Object.entries(d.by_category || {}).sort((a, b) => b[1].accuracy - a[1].accuracy);
+    if (cats.length) {
+      html += '<div style="margin-top:16px"><div style="font-size:11px;color:#9aa0a6;font-weight:700;letter-spacing:.5px;margin-bottom:8px">KATEGORIER</div>'
+        + '<div style="display:flex;flex-direction:column;gap:6px">';
+      for (const [cat, data] of cats) {
+        const pct = Math.round(data.accuracy * 100);
+        const c = data.accuracy >= 0.75 ? '#1e8e3e' : data.accuracy >= 0.55 ? '#f9ab00' : '#ea4335';
+        html += '<div style="display:flex;align-items:center;gap:10px">'
+          + '<div style="width:120px;font-size:13px;color:#3c4043;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + cat + '</div>'
+          + '<div style="flex:1;background:#f1f3f4;border-radius:3px;height:6px;overflow:hidden"><div style="width:' + pct + '%;height:100%;background:' + c + ';border-radius:3px"></div></div>'
+          + '<div style="width:40px;text-align:right;font-size:13px;font-weight:700;color:' + c + '">' + pct + '%</div>'
+          + '<div style="width:40px;text-align:right;font-size:11px;color:#9aa0a6">' + data.count + ' stk</div>'
+          + '</div>';
+      }
+      html += '</div></div>';
+    }
+
+    // By city table
+    const cities = Object.entries(d.by_city || {}).sort((a, b) => b[1].accuracy - a[1].accuracy).slice(0, 5);
+    if (cities.length) {
+      html += '<div style="margin-top:16px"><div style="font-size:11px;color:#9aa0a6;font-weight:700;letter-spacing:.5px;margin-bottom:8px">BYER</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+      for (const [city, data] of cities) {
+        const pct = Math.round(data.accuracy * 100);
+        const c = data.accuracy >= 0.75 ? '#1e8e3e' : data.accuracy >= 0.55 ? '#f9ab00' : '#ea4335';
+        html += '<span style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:4px 10px;font-size:12px">'
+          + city + ' <strong style="color:' + c + '">' + pct + '%</strong></span>';
+      }
+      html += '</div></div>';
+    }
+
+    // Suggested improvements
+    if (d.suggested_improvements && d.suggested_improvements.length) {
+      html += '<div style="margin-top:16px;background:#fef9e7;border-radius:8px;padding:12px 14px">'
+        + '<div style="font-size:11px;color:#9aa0a6;font-weight:700;margin-bottom:6px">FORBEDRINGSFORSLAG</div>';
+      for (const tip of d.suggested_improvements) {
+        html += '<div style="font-size:13px;color:#3c4043;margin-bottom:4px">• ' + tip + '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '<div style="font-size:11px;color:#9aa0a6;padding:10px 0 2px">Systemet lærer af din feedback · opdateres løbende</div>';
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div style="padding:12px;color:#ea4335;font-size:13px">Læringsdata utilgængelig – prøv igen</div>';
+  }
+}
+
+function _lKpi(icon, value, label) {
+  return '<div style="min-width:80px"><div style="font-size:11px;color:#9aa0a6;margin-bottom:3px">' + icon + ' ' + label + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:#202124">' + value + '</div></div>';
+}
+
+function _lKpiColored(icon, value, label, color) {
+  return '<div style="min-width:80px"><div style="font-size:11px;color:#9aa0a6;margin-bottom:3px">' + icon + ' ' + label + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:' + color + '">' + value + '</div></div>';
+}
 
 // ── Kontraktmuligheder (Phase 2) ──────────────────────────────────
 function priorityColor(label) {
