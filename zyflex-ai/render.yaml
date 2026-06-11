@@ -7,6 +7,10 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
+    disk:
+      name: zyflex-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.0"
@@ -14,3 +18,9 @@ services:
         value: Europe/Copenhagen
       - key: CACHE_TTL
         value: "300"
+      - key: FEEDBACK_DATA_PATH
+        value: /var/data/feedback.jsonl
+      - key: DEMAND_LOG_PATH
+        value: /var/data/demand_research.jsonl
+      - key: CONTRACTS_LOG_PATH
+        value: /var/data/contracts_log.jsonl
