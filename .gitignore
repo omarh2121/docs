@@ -1,2 +1,4 @@
 .idea
 .DS_Store
+zyflex-ai/**/__pycache__
+zyflex-ai/**/*.pyc

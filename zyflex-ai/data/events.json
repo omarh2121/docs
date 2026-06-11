@@ -1,0 +1,60 @@
+{
+  "events": [
+    {
+      "name": "Copenhagen Marathon 2026",
+      "zone": "Centrum",
+      "start_date": "2026-05-17",
+      "end_date": "2026-05-17",
+      "demand_multiplier": 1.6,
+      "peak_hours": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    },
+    {
+      "name": "Distortion Festival 2026",
+      "zone": "Nørrebro",
+      "start_date": "2026-05-27",
+      "end_date": "2026-06-01",
+      "demand_multiplier": 2.2,
+      "peak_hours": [14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2]
+    },
+    {
+      "name": "Roskilde Festival 2026",
+      "zone": "Roskilde",
+      "start_date": "2026-06-27",
+      "end_date": "2026-07-05",
+      "demand_multiplier": 2.5,
+      "peak_hours": [20, 21, 22, 23, 0, 1, 2, 3]
+    },
+    {
+      "name": "Copenhagen Jazz Festival 2026",
+      "zone": "Centrum",
+      "start_date": "2026-07-03",
+      "end_date": "2026-07-12",
+      "demand_multiplier": 1.8,
+      "peak_hours": [17, 18, 19, 20, 21, 22, 23]
+    },
+    {
+      "name": "Smukfest (Skanderborg)",
+      "zone": "Lufthavn",
+      "start_date": "2026-08-05",
+      "end_date": "2026-08-09",
+      "demand_multiplier": 1.5,
+      "peak_hours": [6, 7, 8, 9, 18, 19, 20, 21, 22, 23]
+    },
+    {
+      "name": "FC København – Parken",
+      "zone": "Østerbro",
+      "start_date": "2026-04-26",
+      "end_date": "2026-04-26",
+      "demand_multiplier": 1.9,
+      "peak_hours": [16, 17, 18, 19, 20, 21, 22, 23]
+    },
+    {
+      "name": "Nytårsaften 2026",
+      "zone": "Rådhuspladsen",
+      "start_date": "2026-12-31",
+      "end_date": "2026-12-31",
+      "demand_multiplier": 3.0,
+      "peak_hours": [18, 19, 20, 21, 22, 23, 0, 1, 2, 3]
+    }
+  ]
+}

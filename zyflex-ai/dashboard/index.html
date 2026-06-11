@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zyflex AI – Command Center</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-left">
+    <span class="logo">⚡ Zyflex AI</span>
+    <span class="header-subtitle">Command Center</span>
+  </div>
+  <div class="header-right">
+    <span id="liveClock" style="font-size:13px;color:#5f6368;font-weight:500">--:--:--</span>
+    <span class="last-updated" id="lastUpdated">Henter data...</span>
+    <button class="btn btn-secondary btn-sm" onclick="refresh()">↻ Opdater</button>
+    <a href="/driver" class="btn btn-primary btn-sm">🚖 Chauffør-visning</a>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- KPI Strip -->
+  <section class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-icon blue">📈</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-demand-val">–</div>
+        <div class="kpi-label">Samlet efterspørgsel</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green">📍</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-zone-val">–</div>
+        <div class="kpi-label">Bedste zone nu</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon yellow">💰</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-earning-val">–</div>
+        <div class="kpi-label">Indtjeningspotentiale</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon red">🔔</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-alerts-val">0</div>
+        <div class="kpi-label">Aktive advarsler</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple">🏢</div>
+      <div class="kpi-body">
+        <div class="kpi-value" id="kpi-leads-val">0</div>
+        <div class="kpi-label">B2B leads (høj)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Context label -->
+  <div style="font-size:12px;color:#5f6368;margin-bottom:16px;padding-left:2px" id="kpi-context"></div>
+
+  <!-- Active alerts (hidden when empty) -->
+  <section class="card alerts-card" id="alertsSection" style="display:none">
+    <div class="card-header">
+      <h2>🚨 Aktive Advarsler</h2>
+    </div>
+    <div id="alertsList"></div>
+  </section>
+
+  <!-- Live Demand Signals (Phase 1) -->
+  <section class="card" id="demandSection" style="margin-bottom:20px">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+      <h2>📡 Live Efterspørgselssignaler</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label for="demandCity" style="font-size:12px;color:#5f6368">By:</label>
+        <select id="demandCity" onchange="loadDemand()" style="font-size:13px;padding:4px 8px;border:1px solid #dadce0;border-radius:6px;background:#fff;color:#202124;cursor:pointer">
+          <option value="København">København</option>
+          <option value="Horsens">Horsens</option>
+          <option value="Aarhus">Aarhus</option>
+          <option value="Odense">Odense</option>
+          <option value="Aalborg">Aalborg</option>
+          <option value="Vejle">Vejle</option>
+          <option value="Randers">Randers</option>
+          <option value="Silkeborg">Silkeborg</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="loadDemand()">↻</button>
+      </div>
+    </div>
+    <div id="demandBody">
+      <div class="loading"><div class="spinner"></div>Henter efterspørgselsdata...</div>
+    </div>
+  </section>
+
+  <!-- Zone intelligence + Right column -->
+  <div class="grid-two">
+
+    <!-- Left: chart + zone table -->
+    <div class="card zone-card">
+      <div class="card-header">
+        <h2>Zone Intelligens</h2>
+        <span class="chip" id="time-label">–</span>
+      </div>
+      <div style="position:relative;height:200px">
+        <canvas id="zoneChart"></canvas>
+      </div>
+      <div class="zone-table" id="zoneTable">
+        <div class="loading"><div class="spinner"></div>Henter zonedata...</div>
+      </div>
+    </div>
+
+    <!-- Right: weather + agents -->
+    <div class="right-column">
+      <div class="card">
+        <div class="card-header"><h2>🌤 Vejr – København</h2></div>
+        <div class="weather-box" id="weatherBox">
+          <div class="loading" style="padding:16px 0">Henter vejr...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>🤖 Agent Status</h2></div>
+        <div id="agentList">
+          <div class="loading" style="padding:12px 0">Henter agenter...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Events + Leads -->
+  <div class="section-row">
+    <div class="card">
+      <div class="card-header"><h2>📅 Kommende Events</h2></div>
+      <div id="eventsList"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>🏢 B2B Salgsmuligheder</h2></div>
+      <div id="leadsList"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- Kontraktmuligheder (Phase 2) -->
+  <section class="card" id="contractsSection" style="margin-bottom:20px">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+      <h2>🤝 Kontraktmuligheder</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;color:#5f6368">Top 10 virksomheder i valgt by</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadContracts()">↻</button>
+      </div>
+    </div>
+    <div id="contractsBody">
+      <div class="loading"><div class="spinner"></div>Henter kontraktmuligheder...</div>
+    </div>
+  </section>
+
+  <!-- Systemlæring & Feedback (Phase 3) -->
+  <section class="card" id="learningSection" style="margin-bottom:20px">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+      <h2>🧠 Systemlæring & Feedback</h2>
+      <button class="btn btn-secondary btn-sm" onclick="loadLearning()">↻ Opdater</button>
+    </div>
+    <div id="learningBody">
+      <div class="loading"><div class="spinner"></div>Henter læringsdata...</div>
+    </div>
+  </section>
+
+  <!-- History -->
+  <div class="card">
+    <div class="card-header"><h2>📊 Historik & Mønstre</h2></div>
+    <div id="historySection"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+</main>
+
+<script src="/static/app.js"></script>
+<script>
+// ── Live Demand Signals (Phase 1) ─────────────────────────────────
+function demandLabel(label) {
+  const map = { high: 'HØJ', medium: 'MEDIUM', low: 'LAV' };
+  const color = { high: '#1e8e3e', medium: '#f9ab00', low: '#ea4335' };
+  const bg    = { high: '#e6f4ea', medium: '#fef9e7', low: '#fce8e6' };
+  const text = map[label] || label;
+  const c = color[label] || '#5f6368';
+  const b = bg[label]    || '#f1f3f4';
+  return `<span style="background:${b};color:${c};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">${text}</span>`;
+}
+
+async function loadDemand() {
+  const city = document.getElementById('demandCity').value;
+  const body = document.getElementById('demandBody');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Analyserer ' + city + '...</div>';
+  try {
+    const res = await fetch('/ai/demand-research?city=' + encodeURIComponent(city));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    const goNow = d.confidence >= 80 && d.demand_now === 'high';
+    const w = d.signals && d.signals.weather;
+    const tempStr = w && w.temperature != null ? w.temperature + '°C · ' + (w.description || '') : (w ? w.description || '' : '');
+    body.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:24px;padding:12px 0 4px">
+        <div style="min-width:140px">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:4px">Efterspørgsel nu</div>
+          <div style="font-size:20px;font-weight:700">${demandLabel(d.demand_now)}</div>
+        </div>
+        <div style="min-width:140px">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:4px">Om 20 min</div>
+          <div style="font-size:20px;font-weight:700">${demandLabel(d.demand_20_min)}</div>
+        </div>
+        <div style="min-width:120px">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:4px">Score</div>
+          <div style="font-size:20px;font-weight:700;color:#1a73e8">${d.score}</div>
+        </div>
+        <div style="min-width:120px">
+          <div style="font-size:11px;color:#5f6368;margin-bottom:4px">Confidence</div>
+          <div style="font-size:20px;font-weight:700;color:#5f6368">${d.confidence}%</div>
+        </div>
+        ${goNow ? '<div style="display:flex;align-items:center"><span style="background:#1e8e3e;color:#fff;padding:8px 20px;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.5px">KØR NU</span></div>' : ''}
+      </div>
+      <div style="font-size:13px;color:#3c4043;margin:10px 0 6px;line-height:1.6">${d.reason_da || ''}</div>
+      ${tempStr ? '<div style="font-size:12px;color:#5f6368">Vejr: ' + tempStr + '</div>' : ''}
+      <div style="font-size:11px;color:#9aa0a6;margin-top:8px">Zone: ${d.zone} · ${new Date(d.timestamp).toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})}</div>
+    `;
+  } catch (err) {
+    body.innerHTML = '<div style="padding:12px;color:#ea4335;font-size:13px">Efterspørgselsdata utilgængelig – prøv igen</div>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => { loadDemand(); loadContracts(); loadLearning(); });
+
+// ── Systemlæring & Feedback (Phase 3) ─────────────────────────────
+async function loadLearning() {
+  const body = document.getElementById('learningBody');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Henter læringsdata...</div>';
+  try {
+    const res = await fetch('/ai/learning/report');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+
+    if (!d.has_data) {
+      body.innerHTML = '<div style="padding:16px;color:#5f6368;font-size:13px;text-align:center">'
+        + '🧠 Ingen feedback endnu – brug 👍/👎 i chaufførvisningen for at træne systemet'
+        + '</div>';
+      return;
+    }
+
+    const accPct = d.accuracy_overall != null ? Math.round(d.accuracy_overall * 100) + '%' : '–';
+    const accColor = d.accuracy_overall >= 0.75 ? '#1e8e3e' : d.accuracy_overall >= 0.55 ? '#f9ab00' : '#ea4335';
+
+    // KPI strip
+    let html = '<div style="display:flex;flex-wrap:wrap;gap:20px;padding:12px 0 16px;border-bottom:1px solid #f0f0f0">'
+      + _lKpi('📊', d.total_feedback, 'Total feedback')
+      + _lKpi('👍', d.positive_count, 'Positiv')
+      + _lKpi('👎', d.negative_count, 'Negativ')
+      + _lKpiColored('🎯', accPct, 'Samlet accuracy', accColor)
+      + '</div>';
+
+    // By category table
+    const cats = Object.entries(d.by_category || {}).sort((a, b) => b[1].accuracy - a[1].accuracy);
+    if (cats.length) {
+      html += '<div style="margin-top:16px"><div style="font-size:11px;color:#9aa0a6;font-weight:700;letter-spacing:.5px;margin-bottom:8px">KATEGORIER</div>'
+        + '<div style="display:flex;flex-direction:column;gap:6px">';
+      for (const [cat, data] of cats) {
+        const pct = Math.round(data.accuracy * 100);
+        const c = data.accuracy >= 0.75 ? '#1e8e3e' : data.accuracy >= 0.55 ? '#f9ab00' : '#ea4335';
+        html += '<div style="display:flex;align-items:center;gap:10px">'
+          + '<div style="width:120px;font-size:13px;color:#3c4043;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + cat + '</div>'
+          + '<div style="flex:1;background:#f1f3f4;border-radius:3px;height:6px;overflow:hidden"><div style="width:' + pct + '%;height:100%;background:' + c + ';border-radius:3px"></div></div>'
+          + '<div style="width:40px;text-align:right;font-size:13px;font-weight:700;color:' + c + '">' + pct + '%</div>'
+          + '<div style="width:40px;text-align:right;font-size:11px;color:#9aa0a6">' + data.count + ' stk</div>'
+          + '</div>';
+      }
+      html += '</div></div>';
+    }
+
+    // By city table
+    const cities = Object.entries(d.by_city || {}).sort((a, b) => b[1].accuracy - a[1].accuracy).slice(0, 5);
+    if (cities.length) {
+      html += '<div style="margin-top:16px"><div style="font-size:11px;color:#9aa0a6;font-weight:700;letter-spacing:.5px;margin-bottom:8px">BYER</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+      for (const [city, data] of cities) {
+        const pct = Math.round(data.accuracy * 100);
+        const c = data.accuracy >= 0.75 ? '#1e8e3e' : data.accuracy >= 0.55 ? '#f9ab00' : '#ea4335';
+        html += '<span style="background:#f8f9fa;border:1px solid #e0e0e0;border-radius:8px;padding:4px 10px;font-size:12px">'
+          + city + ' <strong style="color:' + c + '">' + pct + '%</strong></span>';
+      }
+      html += '</div></div>';
+    }
+
+    // Suggested improvements
+    if (d.suggested_improvements && d.suggested_improvements.length) {
+      html += '<div style="margin-top:16px;background:#fef9e7;border-radius:8px;padding:12px 14px">'
+        + '<div style="font-size:11px;color:#9aa0a6;font-weight:700;margin-bottom:6px">FORBEDRINGSFORSLAG</div>';
+      for (const tip of d.suggested_improvements) {
+        html += '<div style="font-size:13px;color:#3c4043;margin-bottom:4px">• ' + tip + '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '<div style="font-size:11px;color:#9aa0a6;padding:10px 0 2px">Systemet lærer af din feedback · opdateres løbende</div>';
+    body.innerHTML = html;
+  } catch (err) {
+    body.innerHTML = '<div style="padding:12px;color:#ea4335;font-size:13px">Læringsdata utilgængelig – prøv igen</div>';
+  }
+}
+
+function _lKpi(icon, value, label) {
+  return '<div style="min-width:80px"><div style="font-size:11px;color:#9aa0a6;margin-bottom:3px">' + icon + ' ' + label + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:#202124">' + value + '</div></div>';
+}
+
+function _lKpiColored(icon, value, label, color) {
+  return '<div style="min-width:80px"><div style="font-size:11px;color:#9aa0a6;margin-bottom:3px">' + icon + ' ' + label + '</div>'
+    + '<div style="font-size:22px;font-weight:800;color:' + color + '">' + value + '</div></div>';
+}
+
+// ── Kontraktmuligheder (Phase 2) ──────────────────────────────────
+function priorityColor(label) {
+  if (label === 'høj')   return { bg: '#e6f4ea', color: '#1e8e3e', border: '#a8d5b5' };
+  if (label === 'medium') return { bg: '#fef9e7', color: '#c07a00', border: '#f5d78e' };
+  return                        { bg: '#fce8e6', color: '#c5221f', border: '#f5a8a5' };
+}
+
+function priorityDa(label) {
+  return label === 'høj' ? 'HØJ' : label === 'medium' ? 'MEDIUM' : 'LAV';
+}
+
+async function loadContracts() {
+  const city = document.getElementById('demandCity') ? document.getElementById('demandCity').value : 'København';
+  const body = document.getElementById('contractsBody');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>Analyserer ' + city + '...</div>';
+  try {
+    const res = await fetch('/ai/contracts?city=' + encodeURIComponent(city));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    const contracts = d.top_contracts || [];
+    if (!contracts.length) { body.innerHTML = '<p style="padding:16px;color:#5f6368">Ingen data</p>'; return; }
+    body.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">'
+      + contracts.map((c, i) => {
+          const pc = priorityColor(c.priority_label || 'medium');
+          const scoreBar = Math.round((c.potential_score / 100) * 100);
+          return '<div style="border:1px solid #e0e0e0;border-radius:10px;padding:14px 16px;cursor:pointer" onclick="this.querySelector(\'.contract-detail\').style.display=this.querySelector(\'.contract-detail\').style.display===\'none\'?\'block\':\'none\'">'
+            + '<div style="display:flex;align-items:center;gap:12px">'
+            +   '<div style="font-size:13px;color:#bbb;width:20px;text-align:center;font-weight:700">' + (i+1) + '</div>'
+            +   '<div style="flex:1;min-width:0">'
+            +     '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+            +       '<span style="font-size:15px;font-weight:700;color:#202124">' + c.name + '</span>'
+            +       '<span style="background:' + pc.bg + ';color:' + pc.color + ';border:1px solid ' + pc.border + ';padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">' + priorityDa(c.priority_label) + '</span>'
+            +       '<span style="background:#f1f3f4;color:#5f6368;padding:2px 8px;border-radius:10px;font-size:11px">' + (c.type || '') + '</span>'
+            +     '</div>'
+            +     '<div style="font-size:12px;color:#5f6368;margin-top:3px">' + (c.score_explanation || '') + '</div>'
+            +     '<div style="background:#f1f3f4;border-radius:3px;height:4px;margin-top:8px;overflow:hidden"><div style="width:' + scoreBar + '%;height:100%;background:' + pc.color + ';border-radius:3px"></div></div>'
+            +   '</div>'
+            +   '<div style="font-size:18px;font-weight:800;color:#1a73e8;flex-shrink:0">' + c.potential_score + '</div>'
+            + '</div>'
+            + '<div class="contract-detail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;font-size:13px;color:#3c4043;line-height:1.8">'
+            +   '<div><strong>Mulighed:</strong> ' + (c.opportunity || '') + '</div>'
+            +   '<div><strong>Handling:</strong> ' + (c.action_da || '') + '</div>'
+            +   '<div><strong>Kontakt:</strong> ' + (c.contact_title || '') + '</div>'
+            +   (c.phone ? '<div><strong>Telefon:</strong> <a href="tel:' + c.phone + '" style="color:#1a73e8">' + c.phone + '</a></div>' : '')
+            +   (c.website ? '<div><strong>Website:</strong> <a href="https://' + c.website + '" target="_blank" rel="noopener" style="color:#1a73e8">' + c.website + '</a></div>' : '')
+            +   (c.address ? '<div><strong>Adresse:</strong> ' + c.address + '</div>' : '')
+            +   (c.size_hint ? '<div style="margin-top:6px;font-style:italic;color:#5f6368">' + c.size_hint + '</div>' : '')
+            + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '<div style="font-size:11px;color:#9aa0a6;padding:8px 4px 0">Klik på en virksomhed for kontaktinfo · ' + d.total + ' muligheder i ' + d.city + '</div>';
+  } catch (err) {
+    body.innerHTML = '<div style="padding:12px;color:#ea4335;font-size:13px">Kontraktdata utilgængelig – prøv igen</div>';
+  }
+}
+</script>
+</body>
+</html>

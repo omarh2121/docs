@@ -1,0 +1,45 @@
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent.parent
+DATA_DIR = BASE_DIR / "data"
+DASHBOARD_DIR = BASE_DIR / "dashboard"
+
+# Persistent data paths — override to point at a mounted volume in production.
+# Example (Render): set FEEDBACK_DATA_PATH=/var/data/feedback.jsonl
+# and mount a Render Disk at /var/data.
+_default_data = BASE_DIR / "data"
+FEEDBACK_DATA_PATH = Path(os.getenv("FEEDBACK_DATA_PATH", str(_default_data / "feedback.jsonl")))
+DEMAND_LOG_PATH    = Path(os.getenv("DEMAND_LOG_PATH",    str(_default_data / "demand_research.jsonl")))
+CONTRACTS_LOG_PATH = Path(os.getenv("CONTRACTS_LOG_PATH", str(_default_data / "contracts_log.jsonl")))
+
+CITY = os.getenv("CITY", "København")
+WEATHER_LAT = float(os.getenv("WEATHER_LAT", "55.6761"))
+WEATHER_LON = float(os.getenv("WEATHER_LON", "12.5683"))
+WEATHER_TZ = os.getenv("WEATHER_TZ", "Europe/Copenhagen")
+CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))  # seconds
+GOOGLE_PLACES_KEY = os.getenv("GOOGLE_PLACES_KEY", "")
+
+ZONES = [
+    "Centrum", "Nørreport", "Rådhuspladsen", "Lufthavn",
+    "Hovedbanegård", "Nørrebro", "Østerbro", "Frederiksberg",
+    "Valby", "Amager",
+]
+
+ZONE_BASE: dict = {
+    "Centrum": 0.85,
+    "Nørreport": 0.90,
+    "Rådhuspladsen": 0.80,
+    "Lufthavn": 0.75,
+    "Hovedbanegård": 0.85,
+    "Nørrebro": 0.70,
+    "Østerbro": 0.65,
+    "Frederiksberg": 0.70,
+    "Valby": 0.45,
+    "Amager": 0.50,
+}
+
+WEEKDAY_NAMES = [
+    "Mandag", "Tirsdag", "Onsdag", "Torsdag",
+    "Fredag", "Lørdag", "Søndag",
+]

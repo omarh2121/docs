@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>Zyflex – Tjen Mere</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Header ──────────────────────────────────────── */
+    .header {
+      background: #111;
+      padding: 13px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e1e1e;
+      flex-shrink: 0;
+    }
+    .logo { font-size: 17px; font-weight: 700; color: #1a73e8; letter-spacing: -0.3px; }
+    .clock { font-size: 15px; color: #888; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+    /* ── Alert strip ─────────────────────────────────── */
+    .alert-strip {
+      display: none;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .2px;
+      flex-shrink: 0;
+      line-height: 1.4;
+    }
+    .alert-strip.show { display: block; }
+    .alert-strip.high   { background: #b71c1c; color: #fff; }
+    .alert-strip.medium { background: #e65100; color: #fff; }
+    .alert-strip.low    { background: #1b5e20; color: #a5d6a7; }
+
+    /* ── Main instruction ────────────────────────────── */
+    .main-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 24px 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .event-banner {
+      background: rgba(245,197,24,0.1);
+      border: 1px solid rgba(245,197,24,0.25);
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: 13px;
+      color: #f5c518;
+      margin-bottom: 20px;
+      max-width: 320px;
+      display: none;
+    }
+    .event-banner.show { display: block; }
+
+    .kør-label {
+      font-size: 10px;
+      letter-spacing: 5px;
+      color: #444;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .zone-name {
+      font-size: clamp(44px, 13vw, 68px);
+      font-weight: 900;
+      color: #f5c518;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+    .score-pill {
+      display: inline-block;
+      background: rgba(245,197,24,0.1);
+      border: 1px solid rgba(245,197,24,0.22);
+      color: #a08010;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 10px;
+      letter-spacing: .3px;
+    }
+    .demand-pill {
+      display: none;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #777;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-top: 6px;
+      letter-spacing: .3px;
+    }
+    .reason {
+      font-size: 16px;
+      color: #bbb;
+      margin: 18px auto 0;
+      max-width: 300px;
+      line-height: 1.6;
+    }
+    .tip {
+      font-size: 13px;
+      color: #555;
+      font-style: italic;
+      max-width: 290px;
+      margin: 9px auto 0;
+      line-height: 1.5;
+    }
+
+    /* Confidence bar */
+    .conf-wrap { width: 100%; max-width: 260px; margin: 18px auto 0; }
+    .conf-labels { display: flex; justify-content: space-between; font-size: 11px; color: #444; margin-bottom: 5px; }
+    .conf-bg { background: #1a1a1a; border-radius: 3px; height: 4px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #1a73e8, #34a853); transition: width .8s ease; }
+
+    .divider { width: 40px; height: 1px; background: #1a1a1a; margin: 20px auto; }
+    .backup { font-size: 13px; color: #3a3a3a; }
+    .backup strong { color: #555; }
+
+    /* ── Section header ──────────────────────────────── */
+    .section-header {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: #2e2e2e;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 0 16px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ── TOP 3 ZONE CARDS ────────────────────────────── */
+    .zones-section {
+      padding: 4px 16px 8px;
+      flex-shrink: 0;
+      display: none;
+    }
+    .zone-cards { display: flex; flex-direction: column; gap: 8px; }
+    .zone-card {
+      background: #111;
+      border: 1px solid #1c1c1c;
+      border-radius: 10px;
+      padding: 11px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .zone-rank { font-size: 11px; color: #2a2a2a; font-weight: 700; width: 14px; flex-shrink: 0; text-align: center; }
+    .zone-body { flex: 1; min-width: 0; }
+    .zone-card-name { font-size: 15px; font-weight: 700; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .zone-bar-wrap { background: #1a1a1a; border-radius: 3px; height: 4px; margin-top: 7px; overflow: hidden; }
+    .zone-bar { height: 100%; border-radius: 3px; transition: width .7s ease; }
+    .zone-bar.high   { background: #34a853; }
+    .zone-bar.medium { background: #f9ab00; }
+    .zone-bar.low-d  { background: #ea8600; }
+    .zone-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+    .zone-fare { font-size: 14px; font-weight: 700; color: #f5c518; white-space: nowrap; }
+    .zone-fare-empty { font-size: 12px; color: #2a2a2a; }
+    .zone-badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+    .zbadge {
+      font-size: 10px; padding: 2px 6px; border-radius: 8px; font-weight: 600; white-space: nowrap;
+    }
+    .zbadge-weather { background: rgba(245,197,24,0.12); color: #b89010; border: 1px solid rgba(245,197,24,0.25); }
+    .zbadge-event   { background: rgba(26,115,232,0.12); color: #5a9af8; border: 1px solid rgba(26,115,232,0.25); }
+
+    /* ── UPCOMING EVENTS ─────────────────────────────── */
+    .events-section {
+      padding: 4px 16px 8px;
+      flex-shrink: 0;
+      display: none;
+    }
+    .event-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #161616;
+    }
+    .event-row:last-child { border-bottom: none; }
+    .event-date { background: #161616; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #444; font-weight: 600; flex-shrink: 0; white-space: nowrap; }
+    .event-info { flex: 1; min-width: 0; }
+    .event-name { font-size: 13px; font-weight: 600; color: #bbb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .event-zone-label { font-size: 11px; color: #3a3a3a; margin-top: 1px; }
+    .event-mult { font-size: 13px; font-weight: 700; color: #34a853; flex-shrink: 0; }
+
+    /* ── Weather strip ───────────────────────────────── */
+    .weather-strip {
+      background: #111;
+      border-top: 1px solid #181818;
+      padding: 9px 20px;
+      font-size: 13px;
+      color: #444;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .weather-boost { color: #f5c518; font-weight: 600; }
+
+    /* ── Bottom bar ──────────────────────────────────── */
+    .bottom-bar {
+      background: #111;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #181818;
+      flex-shrink: 0;
+      margin-top: auto;
+    }
+    .update-info { font-size: 11px; color: #2e2e2e; }
+    .refresh-btn {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    .refresh-btn:active { background: #1557b0; transform: scale(0.97); }
+
+    .admin-link { text-align: center; padding: 8px; background: #0d0d0d; }
+    .admin-link a { font-size: 11px; color: #222; text-decoration: none; }
+
+    /* ── Demand signal bar (Phase 1) ─────────────────── */
+    .demand-bar {
+      background: #0f1f0f;
+      border-top: 1px solid #1a2e1a;
+      padding: 12px 20px;
+      display: none;
+      flex-shrink: 0;
+    }
+    .demand-bar.show { display: block; }
+    .demand-bar-title { font-size: 10px; letter-spacing: 3px; color: #2a4a2a; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+    .demand-row { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .demand-item { display: flex; flex-direction: column; gap: 2px; }
+    .demand-item-label { font-size: 10px; color: #3a5a3a; }
+    .demand-item-val { font-size: 15px; font-weight: 800; }
+    .demand-item-val.high   { color: #34a853; }
+    .demand-item-val.medium { color: #f9ab00; }
+    .demand-item-val.low    { color: #ea4335; }
+    .go-now-btn {
+      background: #1e8e3e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .5px;
+      margin-left: auto;
+      cursor: pointer;
+      display: none;
+      animation: pulse-green 1.5s infinite;
+    }
+    .go-now-btn.show { display: block; }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(52,168,83,.5); }
+      50%       { box-shadow: 0 0 0 8px rgba(52,168,83,0); }
+    }
+
+    /* ── Loading / error ─────────────────────────────── */
+    .loading-zone { width: 34px; height: 34px; border: 3px solid #1a1a1a; border-top-color: #1a73e8; border-radius: 50%; animation: spin .7s linear infinite; margin: 4px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">⚡ Zyflex</div>
+  <div class="clock" id="driverClock">--:--</div>
+</div>
+
+<!-- Alert strip (hidden until alerts exist) -->
+<div class="alert-strip" id="alertStrip"></div>
+
+<!-- Main instruction -->
+<div class="main-card">
+  <div id="eventBanner" class="event-banner">🎉 <span id="eventName"></span></div>
+
+  <div class="kør-label">KØR TIL</div>
+  <div class="zone-name" id="dZone"><div class="loading-zone"></div></div>
+  <span class="score-pill" id="dScore" style="display:none"></span>
+  <span class="demand-pill" id="dDemand"></span>
+
+  <div class="reason" id="dReason"></div>
+  <div class="tip"    id="dTip"></div>
+
+  <div class="conf-wrap" id="confWrap" style="display:none">
+    <div class="conf-labels">
+      <span>Systemsikkerhed</span>
+      <span id="confPct">–</span>
+    </div>
+    <div class="conf-bg"><div class="conf-fill" id="confFill" style="width:0"></div></div>
+  </div>
+
+  <div id="feedbackWrap" style="display:none;margin-top:18px;text-align:center">
+    <div style="font-size:11px;color:#333;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Var anbefalingen god?</div>
+    <div style="display:flex;justify-content:center;gap:12px">
+      <button onclick="sendFeedback('positive')" style="background:#1a2e1a;border:1px solid #2a4a2a;color:#34a853;border-radius:10px;padding:10px 20px;font-size:20px;cursor:pointer">👍</button>
+      <button onclick="sendFeedback('negative')" style="background:#2e1a1a;border:1px solid #4a2a2a;color:#ea4335;border-radius:10px;padding:10px 20px;font-size:20px;cursor:pointer">👎</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="backup" id="dBackup"></div>
+</div>
+
+<!-- Top 3 zone cards -->
+<div class="zones-section" id="zonesSection">
+  <div class="section-header">Top 3 Zoner Nu</div>
+  <div class="zone-cards" id="zoneCards"></div>
+</div>
+
+<!-- Upcoming events -->
+<div class="events-section" id="eventsSection">
+  <div class="section-header">Kommende Muligheder</div>
+  <div id="eventRows"></div>
+</div>
+
+<!-- Weather strip -->
+<div class="weather-strip" id="weatherStrip" style="display:none">
+  <span id="weatherEmoji"></span>
+  <span id="weatherText"></span>
+</div>
+
+<!-- Demand signal bar (Phase 1) -->
+<div class="demand-bar" id="demandBar">
+  <div class="demand-bar-title">📡 Live Efterspørgsel</div>
+  <div class="demand-row">
+    <div class="demand-item">
+      <div class="demand-item-label">Nu</div>
+      <div class="demand-item-val" id="drDemandNow">–</div>
+    </div>
+    <div class="demand-item">
+      <div class="demand-item-label">Om 20 min</div>
+      <div class="demand-item-val" id="drDemand20">–</div>
+    </div>
+    <div class="demand-item">
+      <div class="demand-item-label">Confidence</div>
+      <div class="demand-item-val" style="color:#5f8a5f" id="drConf">–</div>
+    </div>
+    <button class="go-now-btn" id="drGoNow">KØR NU</button>
+  </div>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+  <div class="update-info" id="dUpdated">Opdaterer...</div>
+  <button class="refresh-btn" onclick="fetchRec()">↻ Opdater</button>
+</div>
+
+<div class="admin-link"><a href="/">← Admin oversigt</a></div>
+
+<script>
+  // Live clock
+  function tick() {
+    const el = document.getElementById('driverClock');
+    if (el) el.textContent = new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+  }
+  setInterval(tick, 1000);
+  tick();
+
+  // ── Single API call ───────────────────────────────────────────
+  async function fetchRec() {
+    try {
+      const res = await fetch('/api/recommendation');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      render(await res.json());
+    } catch (err) {
+      document.getElementById('dZone').innerHTML = '<span style="color:#555;font-size:22px">FEJL</span>';
+      document.getElementById('dReason').textContent = 'Kunne ikke hente data – prøv igen.';
+      document.getElementById('dScore').style.display = 'none';
+    }
+  }
+
+  // ── Render ────────────────────────────────────────────────────
+  function render(d) {
+
+    // Main instruction
+    document.getElementById('dZone').textContent   = d.zone || '–';
+    document.getElementById('dReason').textContent = d.reason || '';
+    document.getElementById('dTip').textContent    = d.tip || '';
+
+    const pill = document.getElementById('dScore');
+    pill.textContent = 'Score ' + d.score + ' · ' + d.confidence + '% sikkerhed';
+    pill.style.display = 'inline-block';
+
+    // Demand pill
+    const demandPill = document.getElementById('dDemand');
+    if (d.demand_label) {
+      demandPill.textContent = 'Efterspørgsel: ' + d.demand_label;
+      demandPill.style.display = 'inline-block';
+    }
+
+    // Confidence bar
+    document.getElementById('confWrap').style.display = '';
+    document.getElementById('confPct').textContent    = (d.confidence || 0) + '%';
+    document.getElementById('confFill').style.width   = (d.confidence || 0) + '%';
+
+    // Backup zone
+    const backup = document.getElementById('dBackup');
+    backup.innerHTML = d.backup_zone
+      ? 'Alternativt: <strong>' + d.backup_zone + '</strong>'
+      : '';
+
+    // Active event banner
+    const events = d.active_events || [];
+    const banner = document.getElementById('eventBanner');
+    if (events.length > 0) {
+      document.getElementById('eventName').textContent = events[0].name;
+      banner.classList.add('show');
+    } else {
+      banner.classList.remove('show');
+    }
+
+    // ── Alert strip ───────────────────────────────────
+    const alertEl = document.getElementById('alertStrip');
+    const alerts  = d.alerts || [];
+    if (alerts.length > 0) {
+      const a = alerts[0];
+      const icons = { rush_hour:'🚦', weather:'🌧️', event:'🎉', opportunity:'💰', low_demand:'📉' };
+      alertEl.textContent = (icons[a.type] || '📢') + '  ' + a.title + ' — ' + a.message;
+      alertEl.className = 'alert-strip show ' + (a.severity || 'medium');
+    } else {
+      alertEl.className = 'alert-strip';
+    }
+
+    // ── Top 3 zone cards ──────────────────────────────
+    const topZones   = d.top_zones  || [];
+    const zoneFares  = d.zone_fares || {};
+    const cardsEl    = document.getElementById('zoneCards');
+    const zonesSec   = document.getElementById('zonesSection');
+
+    if (topZones.length > 0) {
+      zonesSec.style.display = '';
+      cardsEl.innerHTML = topZones.map((z, i) => {
+        const barClass = z.score >= 65 ? 'high' : z.score >= 45 ? 'medium' : 'low-d';
+        const fare     = zoneFares[z.zone];
+        const fareHtml = fare != null
+          ? '<span class="zone-fare">~' + fare + ' kr/tur</span>'
+          : '<span class="zone-fare-empty">–</span>';
+        const badges = [
+          z.weather_boosted ? '<span class="zbadge zbadge-weather">🌧 Vejr+</span>' : '',
+          (z.events && z.events.length) ? '<span class="zbadge zbadge-event">🎉 Event</span>' : '',
+        ].filter(Boolean).join('');
+        return '<div class="zone-card">'
+          + '<div class="zone-rank">' + (i + 1) + '</div>'
+          + '<div class="zone-body">'
+          +   '<div class="zone-card-name">' + z.zone + '</div>'
+          +   '<div class="zone-bar-wrap"><div class="zone-bar ' + barClass + '" style="width:' + z.score + '%"></div></div>'
+          + '</div>'
+          + '<div class="zone-right">'
+          +   fareHtml
+          +   (badges ? '<div class="zone-badges">' + badges + '</div>' : '')
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    // ── Upcoming events ───────────────────────────────
+    const upcoming  = d.upcoming_events || [];
+    const rowsEl    = document.getElementById('eventRows');
+    const eventsSec = document.getElementById('eventsSection');
+
+    if (upcoming.length > 0) {
+      eventsSec.style.display = '';
+      rowsEl.innerHTML = upcoming.slice(0, 3).map(e => {
+        const parts    = (e.start_date || '').split('-');
+        const dateLabel = parts.length === 3 ? parts[2] + '/' + parts[1] : e.start_date || '';
+        const mult     = e.demand_multiplier ? '×' + e.demand_multiplier : '';
+        return '<div class="event-row">'
+          + '<div class="event-date">' + dateLabel + '</div>'
+          + '<div class="event-info">'
+          +   '<div class="event-name">' + (e.name || '') + '</div>'
+          +   '<div class="event-zone-label">' + (e.zone || '') + '</div>'
+          + '</div>'
+          + (mult ? '<div class="event-mult">' + mult + '</div>' : '')
+          + '</div>';
+      }).join('');
+    }
+
+    // ── Weather strip ─────────────────────────────────
+    const w = d.weather;
+    if (w && w.available !== false && w.temperature != null) {
+      const icon  = w.is_rain ? '🌧️' : w.is_snow ? '❄️' : w.weather_code === 0 ? '☀️' : '⛅';
+      const boost = w.demand_boost > 1.0
+        ? ' · <span class="weather-boost">+' + Math.round((w.demand_boost - 1) * 100) + '% efterspørgsel</span>'
+        : '';
+      document.getElementById('weatherEmoji').textContent = icon;
+      document.getElementById('weatherText').innerHTML    = w.temperature + '°C · ' + w.description + boost;
+      document.getElementById('weatherStrip').style.display = '';
+    }
+
+    document.getElementById('dUpdated').textContent =
+      'Opdateret ' + new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+
+    // Show feedback buttons after recommendation loads
+    _lastRec = d;
+    const fw = document.getElementById('feedbackWrap');
+    if (fw) {
+      fw.style.display = '';
+      fw.innerHTML = '<div style="font-size:11px;color:#333;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Var anbefalingen god?</div>'
+        + '<div style="display:flex;justify-content:center;gap:12px">'
+        + '<button onclick="sendFeedback(\'positive\')" style="background:#1a2e1a;border:1px solid #2a4a2a;color:#34a853;border-radius:10px;padding:10px 20px;font-size:20px;cursor:pointer">👍</button>'
+        + '<button onclick="sendFeedback(\'negative\')" style="background:#2e1a1a;border:1px solid #4a2a2a;color:#ea4335;border-radius:10px;padding:10px 20px;font-size:20px;cursor:pointer">👎</button>'
+        + '</div>';
+    }
+  }
+
+  // ── Feedback (Phase 3) ───────────────────────────────────────
+  let _lastRec = null;
+
+  async function sendFeedback(vote) {
+    if (!_lastRec) return;
+    const wrap = document.getElementById('feedbackWrap');
+    wrap.innerHTML = '<div style="font-size:13px;color:#34a853;padding:4px 0">Tak for din feedback</div>';
+    try {
+      await fetch('/ai/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: window._demandCity || 'København',
+          entity_name: _lastRec.zone || 'Ukendt',
+          entity_type: 'zone',
+          recommendation_type: 'demand',
+          score: _lastRec.score || 0,
+          feedback: vote,
+        }),
+      });
+    } catch (_) {}
+  }
+
+  // ── Demand Research (Phase 1) ─────────────────────────────────
+  const _DEMAND_LABELS = { high: 'HØJ', medium: 'MEDIUM', low: 'LAV' };
+
+  async function fetchDemand() {
+    try {
+      const city = encodeURIComponent(window._demandCity || 'København');
+      const res = await fetch('/ai/demand-research?city=' + city);
+      if (!res.ok) return;
+      const d = await res.json();
+      const nowClass   = d.demand_now   || 'medium';
+      const min20Class = d.demand_20_min || 'medium';
+      document.getElementById('drDemandNow').textContent = _DEMAND_LABELS[nowClass]   || nowClass;
+      document.getElementById('drDemandNow').className   = 'demand-item-val ' + nowClass;
+      document.getElementById('drDemand20').textContent  = _DEMAND_LABELS[min20Class] || min20Class;
+      document.getElementById('drDemand20').className    = 'demand-item-val ' + min20Class;
+      document.getElementById('drConf').textContent      = (d.confidence || 0) + '%';
+      document.getElementById('demandBar').classList.add('show');
+      const goBtn = document.getElementById('drGoNow');
+      if (d.confidence >= 80 && d.demand_now === 'high') {
+        goBtn.classList.add('show');
+      } else {
+        goBtn.classList.remove('show');
+      }
+    } catch (_) {}
+  }
+
+  // Load + auto-refresh every 3 minutes
+  fetchRec();
+  fetchDemand();
+  setInterval(fetchRec, 3 * 60 * 1000);
+  setInterval(fetchDemand, 3 * 60 * 1000);
+</script>
+</body>
+</html>
