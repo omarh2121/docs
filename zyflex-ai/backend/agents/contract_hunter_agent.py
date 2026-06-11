@@ -3,9 +3,9 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List
 
-log = logging.getLogger(__name__)
+from ..config import CONTRACTS_LOG_PATH as _LOG_PATH
 
-_LOG_PATH = Path(__file__).parent.parent.parent / "data" / "contracts_log.jsonl"
+log = logging.getLogger(__name__)
 
 # Priority labels
 _LABEL_HIGH   = "høj"

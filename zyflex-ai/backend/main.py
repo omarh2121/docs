@@ -3,8 +3,6 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from pathlib import Path
-
 import uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .config import CACHE_TTL, DASHBOARD_DIR
+from .config import CACHE_TTL, DASHBOARD_DIR, FEEDBACK_DATA_PATH as _FEEDBACK_PATH
 from .agents.data_agent import DataAgent
 from .agents.analysis_agent import AnalysisAgent
 from .agents.ops_agent import OpsAgent
@@ -23,9 +21,6 @@ from .agents.business_signal_agent import BusinessSignalAgent
 from .agents.contract_hunter_agent import ContractHunterAgent
 from .agents.learning_agent import LearningAgent
 from . import alerts, history
-
-_FEEDBACK_PATH = Path(__file__).parent.parent / "data" / "feedback.jsonl"
-
 
 class FeedbackIn(BaseModel):
     city: str

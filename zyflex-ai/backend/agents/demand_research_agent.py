@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+from ..config import DEMAND_LOG_PATH as _LOG_PATH
+
 log = logging.getLogger(__name__)
 
 CITY_COORDS: Dict[str, tuple] = {
@@ -28,7 +30,6 @@ CITY_COORDS: Dict[str, tuple] = {
     "Roskilde": (55.6420, 12.0874),
 }
 
-_LOG_PATH = Path(__file__).parent.parent.parent / "data" / "demand_research.jsonl"
 _TZ = ZoneInfo("Europe/Copenhagen")
 
 _TIME_BASE: Dict[str, float] = {

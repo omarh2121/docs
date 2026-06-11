@@ -4,9 +4,9 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
-log = logging.getLogger(__name__)
+from ..config import FEEDBACK_DATA_PATH as _FEEDBACK_PATH
 
-_FEEDBACK_PATH = Path(__file__).parent.parent.parent / "data" / "feedback.jsonl"
+log = logging.getLogger(__name__)
 
 
 @runtime_checkable

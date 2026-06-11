@@ -5,6 +5,14 @@ BASE_DIR = Path(__file__).parent.parent
 DATA_DIR = BASE_DIR / "data"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
 
+# Persistent data paths — override to point at a mounted volume in production.
+# Example (Render): set FEEDBACK_DATA_PATH=/var/data/feedback.jsonl
+# and mount a Render Disk at /var/data.
+_default_data = BASE_DIR / "data"
+FEEDBACK_DATA_PATH = Path(os.getenv("FEEDBACK_DATA_PATH", str(_default_data / "feedback.jsonl")))
+DEMAND_LOG_PATH    = Path(os.getenv("DEMAND_LOG_PATH",    str(_default_data / "demand_research.jsonl")))
+CONTRACTS_LOG_PATH = Path(os.getenv("CONTRACTS_LOG_PATH", str(_default_data / "contracts_log.jsonl")))
+
 CITY = os.getenv("CITY", "København")
 WEATHER_LAT = float(os.getenv("WEATHER_LAT", "55.6761"))
 WEATHER_LON = float(os.getenv("WEATHER_LON", "12.5683"))
