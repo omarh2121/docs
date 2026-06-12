@@ -41,19 +41,44 @@
     /* ── Main ────────────────────────────────────────── */
     .main { padding: 16px; max-width: 900px; margin: 0 auto; }
 
-    /* ── KPI strip ───────────────────────────────────── */
-    .kpi-strip {
-      display: flex; gap: 10px; margin-bottom: 16px; overflow-x: auto;
-      padding-bottom: 4px; scrollbar-width: none;
+    /* ── Hero section ───────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #111 0%, #141830 100%);
+      border: 1px solid #1e1e1e;
+      border-radius: 16px;
+      padding: 20px 20px 16px;
+      margin-bottom: 14px;
     }
-    .kpi-strip::-webkit-scrollbar { display: none; }
-    .kpi-card {
-      background: #111; border: 1px solid #1e1e1e; border-radius: 12px;
-      padding: 14px 18px; flex-shrink: 0; min-width: 120px;
+    .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    .kpi-icon { font-size: 18px; margin-bottom: 6px; }
-    .kpi-value { font-size: 22px; font-weight: 800; color: #f5c518; line-height: 1; }
-    .kpi-label { font-size: 11px; color: #444; margin-top: 4px; }
+    .hero-title { font-size: 18px; font-weight: 800; color: #fff; }
+    .hero-sub   { font-size: 12px; color: #444; margin-top: 2px; }
+    .city-select-hero {
+      background: #1a1a1a; color: #fff; border: 1px solid #2a2a2a;
+      border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 600;
+      cursor: pointer; min-width: 140px;
+    }
+    .hero-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .hero-kpi {
+      background: #0d0d0d;
+      border: 1px solid #1e1e1e;
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .hero-kpi-icon { font-size: 20px; margin-bottom: 6px; }
+    .hero-kpi-val  { font-size: 28px; font-weight: 900; color: #1a73e8; line-height: 1; }
+    .hero-kpi-label { font-size: 11px; color: #444; margin-top: 5px; }
 
     /* ── Section card ────────────────────────────────── */
     .card {
@@ -68,7 +93,7 @@
     .card-header h2 { font-size: 14px; font-weight: 700; color: #ddd; letter-spacing: .2px; }
     .card-body { padding: 14px 18px; }
 
-    /* ── City select ─────────────────────────────────── */
+    /* ── City select (inline) ────────────────────────── */
     .city-select {
       background: #1a1a1a; color: #ddd; border: 1px solid #2a2a2a;
       border-radius: 8px; padding: 5px 10px; font-size: 13px; cursor: pointer;
@@ -134,6 +159,27 @@
     .score-bar-bg { background: #1a1a1a; border-radius: 3px; height: 4px; margin-top: 7px; overflow: hidden; }
     .score-bar-fill { height: 100%; border-radius: 3px; }
 
+    /* ── Business signals ────────────────────────────── */
+    .signal-row {
+      display: flex; align-items: center; gap: 12px; padding: 11px 0;
+      border-bottom: 1px solid #161616;
+    }
+    .signal-row:last-child { border-bottom: none; }
+    .signal-badge {
+      display: inline-block; padding: 3px 9px; border-radius: 8px;
+      font-size: 11px; font-weight: 700; flex-shrink: 0; min-width: 68px; text-align: center;
+    }
+    .badge-hospital   { background: rgba(52,168,83,.15);  color: #34a853; }
+    .badge-hotel      { background: rgba(26,115,232,.15);  color: #1a73e8; }
+    .badge-virksomhed { background: rgba(249,171,0,.15);   color: #f9ab00; }
+    .badge-venue      { background: rgba(160,90,220,.15);  color: #a05adc; }
+    .badge-kommune    { background: rgba(234,67,53,.15);   color: #ea4335; }
+    .badge-default    { background: #1a1a1a; color: #555; }
+    .signal-info { flex: 1; min-width: 0; }
+    .signal-name { font-size: 14px; font-weight: 700; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .signal-opp  { font-size: 12px; color: #444; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .signal-pri  { font-size: 15px; font-weight: 800; color: #f5c518; flex-shrink: 0; }
+
     /* ── Learning ────────────────────────────────────── */
     .stat-row  { display: flex; flex-wrap: wrap; gap: 16px; }
     .stat-item { min-width: 80px; }
@@ -184,6 +230,12 @@
       position: sticky; bottom: 0;
     }
     .bottom-info { font-size: 11px; color: #2e2e2e; }
+
+    /* ── Mobile hero kpis 2-col ─────────────────────── */
+    @media(max-width:420px){
+      .hero-kpis { grid-template-columns: repeat(3, 1fr); }
+      .hero-kpi-val { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
@@ -199,27 +251,40 @@
 
 <div class="main">
 
-  <!-- KPI strip -->
-  <div class="kpi-strip">
-    <div class="kpi-card">
-      <div class="kpi-icon">📈</div>
-      <div class="kpi-value" id="kpi-demand-val">–</div>
-      <div class="kpi-label">Efterspørgsel</div>
+  <!-- Hero: Forretningspotentiale -->
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-title">Forretningspotentiale</div>
+        <div class="hero-sub">Vælg by for at se muligheder</div>
+      </div>
+      <select id="heroCity" class="city-select-hero" onchange="onCityChange()">
+        <option value="København">København</option>
+        <option value="Horsens">Horsens</option>
+        <option value="Aarhus">Aarhus</option>
+        <option value="Odense">Odense</option>
+        <option value="Aalborg">Aalborg</option>
+        <option value="Vejle">Vejle</option>
+        <option value="Randers">Randers</option>
+        <option value="Silkeborg">Silkeborg</option>
+      </select>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-icon">📍</div>
-      <div class="kpi-value" id="kpi-zone-val">–</div>
-      <div class="kpi-label">Bedste zone</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon">🔔</div>
-      <div class="kpi-value" id="kpi-alerts-val">0</div>
-      <div class="kpi-label">Advarsler</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon">🏢</div>
-      <div class="kpi-value" id="kpi-leads-val">0</div>
-      <div class="kpi-label">B2B leads</div>
+    <div class="hero-kpis">
+      <div class="hero-kpi">
+        <div class="hero-kpi-icon">📋</div>
+        <div class="hero-kpi-val" id="hkpi-contracts">–</div>
+        <div class="hero-kpi-label">Kontrakter</div>
+      </div>
+      <div class="hero-kpi">
+        <div class="hero-kpi-icon">🏢</div>
+        <div class="hero-kpi-val" id="hkpi-signals">–</div>
+        <div class="hero-kpi-label">B2B-signaler</div>
+      </div>
+      <div class="hero-kpi">
+        <div class="hero-kpi-icon">🔔</div>
+        <div class="hero-kpi-val" id="hkpi-alerts">0</div>
+        <div class="hero-kpi-label">Advarsler</div>
+      </div>
     </div>
   </div>
 
@@ -229,23 +294,33 @@
     <div class="card-body" id="alertsList"></div>
   </div>
 
+  <!-- Contracts (moved to top) -->
+  <div class="card">
+    <div class="card-header">
+      <h2>🤝 Kontraktmuligheder</h2>
+      <button class="btn btn-secondary" onclick="loadContracts()" style="padding:5px 10px">↻</button>
+    </div>
+    <div class="card-body" id="contractsBody">
+      <div class="loading"><div class="spinner"></div><br>Henter...</div>
+    </div>
+  </div>
+
+  <!-- Business Signals (new) -->
+  <div class="card">
+    <div class="card-header">
+      <h2>🏢 B2B Signaler</h2>
+      <button class="btn btn-secondary" onclick="loadSignals()" style="padding:5px 10px">↻</button>
+    </div>
+    <div class="card-body" id="signalsBody">
+      <div class="loading"><div class="spinner"></div><br>Henter...</div>
+    </div>
+  </div>
+
   <!-- Live Demand -->
   <div class="card">
     <div class="card-header">
       <h2>📡 Live Efterspørgsel</h2>
-      <div style="display:flex;align-items:center;gap:8px">
-        <select id="demandCity" class="city-select" onchange="loadDemand()">
-          <option value="København">København</option>
-          <option value="Horsens">Horsens</option>
-          <option value="Aarhus">Aarhus</option>
-          <option value="Odense">Odense</option>
-          <option value="Aalborg">Aalborg</option>
-          <option value="Vejle">Vejle</option>
-          <option value="Randers">Randers</option>
-          <option value="Silkeborg">Silkeborg</option>
-        </select>
-        <button class="btn btn-secondary" onclick="loadDemand()" style="padding:5px 10px">↻</button>
-      </div>
+      <button class="btn btn-secondary" onclick="loadDemand()" style="padding:5px 10px">↻</button>
     </div>
     <div class="card-body" id="demandBody">
       <div class="loading"><div class="spinner"></div><br>Henter...</div>
@@ -268,7 +343,7 @@
     </div>
   </div>
 
-  <!-- Events + Leads grid -->
+  <!-- Events + Agents grid -->
   <div class="grid2">
     <div class="card">
       <div class="card-header"><h2>📅 Kommende Events</h2></div>
@@ -284,18 +359,7 @@
     </div>
   </div>
 
-  <!-- Contracts -->
-  <div class="card">
-    <div class="card-header">
-      <h2>🤝 Kontraktmuligheder</h2>
-      <button class="btn btn-secondary" onclick="loadContracts()" style="padding:5px 10px">↻</button>
-    </div>
-    <div class="card-body" id="contractsBody">
-      <div class="loading"><div class="spinner"></div></div>
-    </div>
-  </div>
-
-  <!-- Learning -->
+  <!-- Learning (bottom) -->
   <div class="card">
     <div class="card-header">
       <h2>🧠 Systemlæring</h2>
@@ -315,6 +379,16 @@
 </div>
 
 <script>
+// ── Shared city state ──────────────────────────────────────────────
+let currentCity = 'København';
+
+function onCityChange() {
+  currentCity = document.getElementById('heroCity').value;
+  loadContracts();
+  loadSignals();
+  loadDemand();
+}
+
 // ── Clock ──────────────────────────────────────────────────────────
 function tick() {
   const el = document.getElementById('liveClock');
@@ -329,13 +403,11 @@ async function loadDashboard() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
 
-    // KPIs
-    document.getElementById('kpi-demand-val').textContent = d.overview?.demand_label || '–';
-    document.getElementById('kpi-zone-val').textContent   = d.overview?.top_zone || '–';
-    document.getElementById('kpi-alerts-val').textContent = d.overview?.active_alerts || 0;
-    document.getElementById('kpi-leads-val').textContent  = d.overview?.new_leads || 0;
+    // Hero alerts KPI
+    const alertCount = d.overview?.active_alerts || 0;
+    document.getElementById('hkpi-alerts').textContent = alertCount;
 
-    // Alerts
+    // Alerts card
     const alertCard = document.getElementById('alertsCard');
     const alertList = document.getElementById('alertsList');
     if (d.alerts && d.alerts.length) {
@@ -409,17 +481,16 @@ async function loadDashboard() {
     document.getElementById('lastUpdated').textContent =
       'Opdateret ' + new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
   } catch (err) {
-    document.getElementById('kpi-demand-val').textContent = '!';
+    document.getElementById('hkpi-alerts').textContent = '!';
   }
 }
 
 // ── Demand ─────────────────────────────────────────────────────────
 async function loadDemand() {
-  const city = document.getElementById('demandCity').value;
   const body = document.getElementById('demandBody');
-  body.innerHTML = '<div class="loading"><div class="spinner"></div><br>Analyserer ' + city + '...</div>';
+  body.innerHTML = '<div class="loading"><div class="spinner"></div><br>Analyserer ' + currentCity + '...</div>';
   try {
-    const res = await fetch('/ai/demand-research?city=' + encodeURIComponent(city));
+    const res = await fetch('/ai/demand-research?city=' + encodeURIComponent(currentCity));
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
     const goNow = d.confidence >= 80 && d.demand_now === 'high';
@@ -427,6 +498,7 @@ async function loadDemand() {
     const w = d.signals?.weather;
     const tempStr = w?.temperature != null ? w.temperature + '°C · ' + (w.description || '') : '';
     body.innerHTML = `
+      <div style="font-size:12px;color:#444;margin-bottom:10px">📍 ${currentCity}</div>
       <div class="demand-row">
         <div class="demand-item">
           <label>Efterspørgsel nu</label>
@@ -456,14 +528,17 @@ async function loadDemand() {
 
 // ── Contracts ──────────────────────────────────────────────────────
 async function loadContracts() {
-  const city = document.getElementById('demandCity')?.value || 'København';
   const body = document.getElementById('contractsBody');
-  body.innerHTML = '<div class="loading"><div class="spinner"></div><br>Analyserer ' + city + '...</div>';
+  body.innerHTML = '<div class="loading"><div class="spinner"></div><br>Analyserer ' + currentCity + '...</div>';
   try {
-    const res = await fetch('/ai/contracts?city=' + encodeURIComponent(city));
+    const res = await fetch('/ai/contracts?city=' + encodeURIComponent(currentCity));
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
     const contracts = d.top_contracts || [];
+
+    // Update hero KPI
+    document.getElementById('hkpi-contracts').textContent = contracts.length;
+
     if (!contracts.length) { body.innerHTML = '<div style="color:#333;font-size:13px">Ingen data</div>'; return; }
     const tagClass = l => l === 'høj' ? 'tag-high' : l === 'medium' ? 'tag-medium' : 'tag-low';
     const tagLabel = l => l === 'høj' ? 'HØJ' : l === 'medium' ? 'MEDIUM' : 'LAV';
@@ -494,6 +569,44 @@ async function loadContracts() {
         </div>
       </div>`).join('')
       + `<div style="font-size:11px;color:#2a2a2a;padding:8px 0 0">Klik for kontaktinfo · ${d.total} muligheder i ${d.city}</div>`;
+  } catch (err) {
+    body.innerHTML = '<div style="color:#ea4335;font-size:13px">Data utilgængelig – prøv igen</div>';
+  }
+}
+
+// ── Business Signals ───────────────────────────────────────────────
+async function loadSignals() {
+  const body = document.getElementById('signalsBody');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div><br>Henter ' + currentCity + '...</div>';
+  try {
+    const res = await fetch('/ai/business-signals?city=' + encodeURIComponent(currentCity));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    const businesses = d.businesses || [];
+
+    // Update hero KPI
+    document.getElementById('hkpi-signals').textContent = businesses.length;
+
+    if (!businesses.length) {
+      body.innerHTML = '<div style="color:#333;font-size:13px">Ingen data</div>';
+      return;
+    }
+
+    const badgeClass = t => {
+      const map = { 'Hospital': 'badge-hospital', 'Hotel': 'badge-hotel', 'Virksomhed': 'badge-virksomhed', 'Venue': 'badge-venue', 'Kommune': 'badge-kommune' };
+      return map[t] || 'badge-default';
+    };
+
+    body.innerHTML = businesses.slice(0, 8).map(b => `
+      <div class="signal-row">
+        <span class="signal-badge ${badgeClass(b.type)}">${b.type}</span>
+        <div class="signal-info">
+          <div class="signal-name">${b.name}</div>
+          <div class="signal-opp">${b.opportunity || ''}</div>
+        </div>
+        <div class="signal-pri">${b.priority}</div>
+      </div>`).join('')
+      + `<div style="font-size:11px;color:#2a2a2a;padding:10px 0 0">Sorteret efter prioritet · ${d.city}</div>`;
   } catch (err) {
     body.innerHTML = '<div style="color:#ea4335;font-size:13px">Data utilgængelig – prøv igen</div>';
   }
@@ -544,7 +657,13 @@ async function loadLearning() {
 }
 
 // ── Load all ───────────────────────────────────────────────────────
-function loadAll() { loadDashboard(); loadDemand(); loadContracts(); loadLearning(); }
+function loadAll() {
+  loadDashboard();
+  loadContracts();
+  loadSignals();
+  loadDemand();
+  loadLearning();
+}
 
 document.addEventListener('DOMContentLoaded', loadAll);
 setInterval(loadAll, 5 * 60 * 1000);
